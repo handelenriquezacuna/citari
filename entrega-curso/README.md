@@ -18,6 +18,27 @@ datos de múltiples tablas. La entrega actual cumple estos requisitos con margen
 matriz). La convención de nombre del documento de entrega es `GX_SC404_KN_IIAvance`, donde X
 corresponde al subgrupo y KN al horario del curso.
 
+## III Entrega y Defensa (semana 14)
+
+La Entrega final y Defensa requiere: al menos 5 funciones, al menos 5 triggers, y un
+archivo con todos los scripts de la base para generar tablas, relaciones, procedimientos
+y la totalidad de estructuras. La entrega actual cumple estos requisitos con margen (6
+funciones, 7 triggers, `08-full-script.sql`). El script de demostración para la defensa es
+[database/scripts/09-defensa.sql](../database/scripts/09-defensa.sql): no crea ni altera
+estructuras, solo consulta y ejercita la base ya construida (vision general de la base
+completa y luego una historia tecnica encadenada: reservar, auditar, consultar detalle,
+cancelar, liberar).
+
+> Nota de alineación (2026-08-08): la base de datos se actualizó de 15 a 24 tablas para
+> quedar alineada con la normalización a 3FN presentada en el Avance #2 (correo y
+> teléfono como atributos multivaluados en tablas propias por entidad, y una tabla
+> `direcciones` para la división territorial de cada localidad). El detalle de las 9
+> tablas nuevas está en [database/diagrams/MODELO-RELACIONAL.md](../database/diagrams/MODELO-RELACIONAL.md).
+> Los prefijos de triggers y vistas también se alinearon a la convención del profesor
+> (`tr_`/`v_` en vez de `trg_`/`vw_`). `apps/api` (fuera del alcance de la rúbrica del
+> curso) aún asume el esquema y los nombres anteriores, y requiere una actualización
+> aparte antes de volver a usarse end-to-end.
+
 ## Matriz de requisitos y evidencia
 
 | # | Requisito | Mínimo | Entregado | Evidencia |
@@ -28,7 +49,7 @@ corresponde al subgrupo y KN al horario del curso.
 | 4 | Diagrama Relacional | N/A | Cumple | [database/diagrams/MODELO-RELACIONAL.md](../database/diagrams/MODELO-RELACIONAL.md) |
 | 5 | Normalización a la 3FN | 3FN | Cumple | [database/diagrams/CITARI-Normalizacion.xlsx](../database/diagrams/CITARI-Normalizacion.xlsx), [docs/database-and-sql.md](../docs/database-and-sql.md) |
 | 6 | Creación de la base mediante DDL | N/A | Cumple | [database/scripts/01-create-database.sql](../database/scripts/01-create-database.sql) |
-| 7 | Tablas | ≥ 10 | 15 | [database/scripts/02-create-tables.sql](../database/scripts/02-create-tables.sql) |
+| 7 | Tablas | ≥ 10 | 24 | [database/scripts/02-create-tables.sql](../database/scripts/02-create-tables.sql) |
 | 8 | Registros por tabla | ≥ 50 | 50 por tabla | [database/scripts/03-seed-data.sql](../database/scripts/03-seed-data.sql); generador: [scripts/gen-seed.py](../scripts/gen-seed.py) |
 | 9 | Procedimientos almacenados | ≥ 10 | 13 | [database/scripts/04-procedures.sql](../database/scripts/04-procedures.sql) |
 | 10 | Vistas multi-tabla | ≥ 5 | 7 | [database/scripts/06-views.sql](../database/scripts/06-views.sql) |
@@ -63,14 +84,23 @@ Verificación de los conteos por tabla y de la matriz de requisitos R3-R6:
 sqlcmd -S localhost -U sa -P "<password>" -C -i scripts/check-all.sql
 ```
 
-Prueba de humo de los 13 procedimientos y 7 triggers:
+Prueba de humo del ciclo de vida completo de una reservación (12 casos, incluye 4
+triggers):
 
 ```
 sqlcmd -S localhost -U sa -P "<password>" -C -i scripts/smoke-db.sql
 ```
 
+Auditoría exhaustiva que ejercita, sin excepción, cada uno de los 24 objetos
+programables (los 13 procedimientos, las 6 funciones, las 7 vistas y los 7 triggers):
+
+```
+sqlcmd -S localhost -U sa -P "<password>" -C -i scripts/full-object-audit.sql
+```
+
 Como alternativa, el archivo [database/scripts/08-full-script.sql](../database/scripts/08-full-script.sql)
-es equivalente a ejecutar los scripts 01-07 sobre un servidor limpio.
+es equivalente a ejecutar los scripts 01-07 sobre un servidor limpio; se regenera con
+`python3 scripts/gen-full-script.py` cada vez que cambie alguno de los scripts fuente.
 
 ## Nota sobre los catálogos de estado
 

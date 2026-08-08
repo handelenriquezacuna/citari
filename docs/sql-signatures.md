@@ -39,19 +39,19 @@ base (requisito R6).
 
 | Vista | Columnas (tipo lógico) |
 | --- | --- |
-| `vw_detalle_reservaciones` | `reserva_id` (int), `dominio_id` (int), `dominio_nombre` (texto), `dominio_slug` (texto), `cliente_id` (int), `cliente_nombre` (texto, concatenado), `cliente_correo` (texto), `servicio_id` (int), `servicio_nombre` (texto), `duracion_minutos` (int), `localidad_id` (int), `localidad_nombre` (texto), `estado` (texto), `fecha_inicio` (datetime), `fecha_final` (datetime), `nota_cliente` (texto, nullable), `nota_interna` (texto, nullable), `codigo_rastreo` (texto, nullable, LEFT JOIN), `creado_en` (datetime) |
-| `vw_agenda_diaria` | `dominio_id` (int), `fecha` (date), `fecha_inicio` (datetime), `fecha_final` (datetime), `servicio_nombre` (texto), `cliente_nombre` (texto), `localidad_nombre` (texto), `estado` (texto) |
-| `vw_servicios_publicos` | `servicio_id` (int), `dominio_id` (int), `dominio_slug` (texto), `categoria_nombre` (texto), `nombre` (texto), `descripcion` (texto, nullable), `duracion_minutos` (int), `precio` (decimal, nullable si `mostrar_precio=0`), `mostrar_precio` (bool). Filtra solo servicio/categoría/dominio activos. |
-| `vw_dashboard_dominio` | `dominio_id` (int), `nombre` (texto), `total_reservaciones` (int), `reservaciones_pendientes` (int), `reservaciones_confirmadas` (int), `reservaciones_canceladas` (int), `total_clientes` (int), `total_servicios_activos` (int), `total_localidades_activas` (int) |
-| `vw_estado_disponibilidad` | `bloque_id` (int), `dominio_id` (int), `dominio_slug` (texto), `localidad_id` (int), `localidad_nombre` (texto), `fecha_de_bloque` (date), `fecha_inicio` (datetime), `fecha_final` (datetime), `bloque_activo` (bool), `reservado` (bool, 1 si hay reserva no cancelada), `reserva_id` (int, nullable) |
-| `vw_historial_reservaciones_cliente` | `cliente_id` (int), `dominio_id` (int), `cliente_nombre` (texto), `correo` (texto), `reserva_id` (int), `servicio_nombre` (texto), `fecha_inicio` (datetime), `estado` (texto), `creado_en` (datetime) |
-| `vw_demanda_servicios` | `servicio_id` (int), `dominio_id` (int), `servicio_nombre` (texto), `total_reservaciones` (int, incluye 0 vía LEFT JOIN), `ultima_reserva` (datetime, nullable) |
+| `v_detalle_reservaciones` | `reserva_id` (int), `dominio_id` (int), `dominio_nombre` (texto), `dominio_slug` (texto), `cliente_id` (int), `cliente_nombre` (texto, concatenado), `cliente_correo` (texto), `servicio_id` (int), `servicio_nombre` (texto), `duracion_minutos` (int), `localidad_id` (int), `localidad_nombre` (texto), `estado` (texto), `fecha_inicio` (datetime), `fecha_final` (datetime), `nota_cliente` (texto, nullable), `nota_interna` (texto, nullable), `codigo_rastreo` (texto, nullable, LEFT JOIN), `creado_en` (datetime) |
+| `v_agenda_diaria` | `dominio_id` (int), `fecha` (date), `fecha_inicio` (datetime), `fecha_final` (datetime), `servicio_nombre` (texto), `cliente_nombre` (texto), `localidad_nombre` (texto), `estado` (texto) |
+| `v_servicios_publicos` | `servicio_id` (int), `dominio_id` (int), `dominio_slug` (texto), `categoria_nombre` (texto), `nombre` (texto), `descripcion` (texto, nullable), `duracion_minutos` (int), `precio` (decimal, nullable si `mostrar_precio=0`), `mostrar_precio` (bool). Filtra solo servicio/categoría/dominio activos. |
+| `v_dashboard_dominio` | `dominio_id` (int), `nombre` (texto), `total_reservaciones` (int), `reservaciones_pendientes` (int), `reservaciones_confirmadas` (int), `reservaciones_canceladas` (int), `total_clientes` (int), `total_servicios_activos` (int), `total_localidades_activas` (int) |
+| `v_estado_disponibilidad` | `bloque_id` (int), `dominio_id` (int), `dominio_slug` (texto), `localidad_id` (int), `localidad_nombre` (texto), `fecha_de_bloque` (date), `fecha_inicio` (datetime), `fecha_final` (datetime), `bloque_activo` (bool), `reservado` (bool, 1 si hay reserva no cancelada), `reserva_id` (int, nullable) |
+| `v_historial_reservaciones_cliente` | `cliente_id` (int), `dominio_id` (int), `cliente_nombre` (texto), `correo` (texto), `reserva_id` (int), `servicio_nombre` (texto), `fecha_inicio` (datetime), `estado` (texto), `creado_en` (datetime) |
+| `v_demanda_servicios` | `servicio_id` (int), `dominio_id` (int), `servicio_nombre` (texto), `total_reservaciones` (int, incluye 0 vía LEFT JOIN), `ultima_reserva` (datetime, nullable) |
 
 ## 3. Funciones escalares
 
 | Función | Firma | Retorno |
 | --- | --- | --- |
-| `dbo.fn_generar_codigo_rastreo` | `(@semilla UNIQUEIDENTIFIER)` | `NVARCHAR(50)`: `'CITARI-'` + 6 caracteres alfanumericos (alfabeto sin 0/O/1/I) derivados determinísticamente de `@semilla`. NULL si `@semilla` es NULL. No puede llamar `NEWID()` internamente (restricción de UDF escalares); el llamador genera la semilla (los triggers si pueden usar `NEWID()`, ver `trg_reservaciones_generar_rastreo`). |
+| `dbo.fn_generar_codigo_rastreo` | `(@semilla UNIQUEIDENTIFIER)` | `NVARCHAR(50)`: `'CITARI-'` + 6 caracteres alfanumericos (alfabeto sin 0/O/1/I) derivados determinísticamente de `@semilla`. NULL si `@semilla` es NULL. No puede llamar `NEWID()` internamente (restricción de UDF escalares); el llamador genera la semilla (los triggers si pueden usar `NEWID()`, ver `tr_reservaciones_generar_rastreo`). |
 | `dbo.fn_dominio_activo` | `(@dominio_id INT)` | `BIT`: 1 si el dominio existe, `activo = 1` y su estado (`estados_dominios`) es `'activo'`. |
 | `dbo.fn_bloque_disponible` | `(@bloque_id INT)` | `BIT`: 1 si el bloque existe, `activo = 1` y ninguna reservación no cancelada le apunta. |
 | `dbo.fn_total_reservaciones_por_dominio` | `(@dominio_id INT)` | `INT`: total de filas en `reservaciones` para ese dominio (0 si no hay). |
@@ -68,13 +68,13 @@ transacción del INSERT/UPDATE sobre `reservaciones`/`dominios`/`servicios`.
 
 | # | Trigger | Evento | Efecto |
 | - | --- | --- | --- |
-| 1 | `trg_reservaciones_generar_rastreo` | AFTER INSERT `reservaciones` | Inserta 1 fila en `codigos_de_rastreos` por reserva (`codigo_rastreo` = `dbo.fn_generar_codigo_rastreo(NEWID())`, `expira_en` = `creado_en` + 30 días, `activo = 1`). |
-| 2 | `trg_reservaciones_auditar_insert` | AFTER INSERT `reservaciones` | Inserta 1 fila en `registros` (`accion='reserva_creada'`, `nombre_entidad='reservaciones'`, `entidad_id=reserva_id`, `dueno_id`/`superadmin_id` NULL - el actor lo registrará la API a futuro). |
-| 3 | `trg_reservaciones_auditar_update` | AFTER UPDATE `reservaciones` | Si cambia `estado_reservacion_id`: inserta 1 fila en `registros` (`accion='reserva_actualizada'`, `valor_anterior`/`nuevo_valor` = nombres de estado). |
-| 4 | `trg_dominios_actualizado_en` | AFTER UPDATE `dominios` | Mantiene `actualizado_en = SYSUTCDATETIME()` (no es necesario que la API lo fije explícitamente, aunque hacerlo no rompe nada). |
-| 5 | `trg_servicios_actualizado_en` | AFTER UPDATE `servicios` | Igual que el anterior, para `servicios`. |
-| 6 | `trg_prevenir_doble_reservacion` | AFTER INSERT, UPDATE `reservaciones` | Defensa en profundidad (red de seguridad, no la vía normal): si más de una reservación no cancelada quedara apuntando al mismo `bloque_disponibilidad_id`, hace `ROLLBACK` + `THROW 50043`. La vía normal (SP + índice único filtrado) ya lo evita. |
-| 7 | `trg_liberar_bloque_al_cancelar` | AFTER UPDATE `reservaciones` | (a) Al cancelar: reactiva el bloque (`activo=1`) y pone `bloque_disponibilidad_id = NULL` en la reserva. (b) Al reagendar (el bloque cambia): reactiva únicamente el bloque ANTERIOR. La API no debe hacer ninguna de las dos cosas manualmente. |
+| 1 | `tr_reservaciones_generar_rastreo` | AFTER INSERT `reservaciones` | Inserta 1 fila en `codigos_de_rastreos` por reserva (`codigo_rastreo` = `dbo.fn_generar_codigo_rastreo(NEWID())`, `expira_en` = `creado_en` + 30 días, `activo = 1`). |
+| 2 | `tr_reservaciones_auditar_insert` | AFTER INSERT `reservaciones` | Inserta 1 fila en `registros` (`accion='reserva_creada'`, `nombre_entidad='reservaciones'`, `entidad_id=reserva_id`, `dueno_id`/`superadmin_id` NULL - el actor lo registrará la API a futuro). |
+| 3 | `tr_reservaciones_auditar_update` | AFTER UPDATE `reservaciones` | Si cambia `estado_reservacion_id`: inserta 1 fila en `registros` (`accion='reserva_actualizada'`, `valor_anterior`/`nuevo_valor` = nombres de estado). |
+| 4 | `tr_dominios_actualizado_en` | AFTER UPDATE `dominios` | Mantiene `actualizado_en = SYSUTCDATETIME()` (no es necesario que la API lo fije explícitamente, aunque hacerlo no rompe nada). |
+| 5 | `tr_servicios_actualizado_en` | AFTER UPDATE `servicios` | Igual que el anterior, para `servicios`. |
+| 6 | `tr_prevenir_doble_reservacion` | AFTER INSERT, UPDATE `reservaciones` | Defensa en profundidad (red de seguridad, no la vía normal): si más de una reservación no cancelada quedara apuntando al mismo `bloque_disponibilidad_id`, hace `ROLLBACK` + `THROW 50043`. La vía normal (SP + índice único filtrado) ya lo evita. |
+| 7 | `tr_liberar_bloque_al_cancelar` | AFTER UPDATE `reservaciones` | (a) Al cancelar: reactiva el bloque (`activo=1`) y pone `bloque_disponibilidad_id = NULL` en la reserva. (b) Al reagendar (el bloque cambia): reactiva únicamente el bloque ANTERIOR. La API no debe hacer ninguna de las dos cosas manualmente. |
 
 ## 5. Códigos THROW globales (50001-50043)
 
@@ -97,7 +97,7 @@ transacción del INSERT/UPDATE sobre `reservaciones`/`dominios`/`servicios`.
 | 50040 | El bloque de disponibilidad ya está ocupado o tiene una reservación activa. | 409 |
 | 50041 | El bloque se solapa con un bloque activo existente en la misma localidad. | 409 |
 | 50042 | El nuevo bloque de disponibilidad (reagendar) ya está ocupado. | 409 |
-| 50043 | Conflicto: más de una reservación no cancelada apunta al mismo bloque de disponibilidad (defensa en profundidad, trigger `trg_prevenir_doble_reservacion`). | 409 |
+| 50043 | Conflicto: más de una reservación no cancelada apunta al mismo bloque de disponibilidad (defensa en profundidad, trigger `tr_prevenir_doble_reservacion`). | 409 |
 
 Rango general: 50001-50019 validación/regla de negocio (400); 50020-50039
 no encontrado / no pertenece al dominio (404); 50040-50059 conflicto /
