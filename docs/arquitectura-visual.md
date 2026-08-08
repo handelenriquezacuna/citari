@@ -28,7 +28,7 @@ flowchart LR
         SP[13 stored procedures]
         VW[7 vistas]
         TR[7 triggers<br/>tracking, auditoria,<br/>liberar bloques]
-        T[(15 tablas<br/>en español)]
+        T[(24 tablas<br/>en español)]
     end
 
     B --> N
@@ -81,7 +81,7 @@ sequenceDiagram
     Note over U,DB: PASO 2 - Cualquier peticion privada
     F->>API: GET /bookings + header Authorization: Bearer eyJ...
     API->>API: guard CurrentOwner decodifica el token<br/>y extrae tenantId DEL TOKEN (nunca del request)
-    API->>DB: vw_detalle_reservaciones WHERE dominio_id = 1
+    API->>DB: v_detalle_reservaciones WHERE dominio_id = 1
     DB-->>API: solo reservas del dominio 1
     API-->>F: { items: [...], total, page, pageSize }
 
@@ -165,7 +165,7 @@ flowchart TD
 
 ```bash
 cp .env.example .env          # y genera JWT_SECRET: openssl rand -hex 32
-bash scripts/setup-db.sh      # SQL Server + 15 tablas + seed + SPs + vistas + triggers
+bash scripts/setup-db.sh      # SQL Server + 24 tablas + seed + SPs + vistas + triggers
 docker compose up --build     # API :8000 + frontend :3000
 ```
 

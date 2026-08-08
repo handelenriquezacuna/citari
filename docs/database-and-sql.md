@@ -33,7 +33,7 @@
   - [Vistas SQL propuestas](#vistas-sql-propuestas)
   - [Triggers propuestos](#triggers-propuestos)
 
-Para mantener el proyecto claro, se propone una base de datos con 15 tablas principales. Esto cumple de sobra con el mínimo de 10 tablas y mantiene el sistema entendible.
+Para mantener el proyecto claro, se propone una base de datos con 24 tablas principales (15 tablas de negocio mas 9 tablas de normalizacion de atributos multivaluados: correo, telefono y division territorial). Esto cumple de sobra con el minimo de 10 tablas y mantiene el sistema entendible.
 
 Los nombres físicos de tablas y columnas están en español (ASCII puro). La equivalencia con los nombres originales en inglés y con el modelo MR con eñe está en `docs/rename-map.csv`.
 
@@ -594,7 +594,7 @@ database/
 
 El proyecto pide al menos 50 registros por tabla.
 
-Como el sistema tiene 15 tablas, se deben preparar scripts de inserción con datos de prueba para cada una.
+Como el sistema tiene 24 tablas, se deben preparar scripts de inserción con datos de prueba para cada una.
 
 Ejemplos de datos:
 
@@ -693,12 +693,12 @@ El curso pide mínimo 5 vistas que integren datos de múltiples tablas.
 
 | Vista | Propósito |
 | --- | --- |
-| vw_booking_details | Muestra reservas con tenant, cliente, servicio, ubicación, estado y tracking. |
-| vw_daily_agenda | Muestra agenda diaria de reservas por tenant. |
-| vw_public_services | Muestra servicios activos visibles para la página pública. |
-| vw_tenant_dashboard | Muestra resumen de reservas, servicios y clientes por tenant. |
-| vw_availability_status | Muestra horarios disponibles y reservados por sede y fecha. |
-| vw_customer_booking_history | Muestra historial de reservas por cliente. |
+| v_booking_details | Muestra reservas con tenant, cliente, servicio, ubicación, estado y tracking. |
+| v_daily_agenda | Muestra agenda diaria de reservas por tenant. |
+| v_public_services | Muestra servicios activos visibles para la página pública. |
+| v_tenant_dashboard | Muestra resumen de reservas, servicios y clientes por tenant. |
+| v_availability_status | Muestra horarios disponibles y reservados por sede y fecha. |
+| v_customer_booking_history | Muestra historial de reservas por cliente. |
 
 Se proponen 6 para tener margen.
 
@@ -708,12 +708,12 @@ El requisito general menciona 5 triggers, aunque en la entrega final se menciona
 
 | Trigger | Propósito |
 | --- | --- |
-| trg_bookings_generate_tracking | Generar código de tracking al crear una reserva. |
-| trg_bookings_audit_insert | Registrar auditoría cuando se crea una reserva. |
-| trg_bookings_audit_update | Registrar auditoría cuando cambia una reserva. |
-| trg_update_tenants_updated_at | Actualizar actualizado_en cuando cambia un tenant. |
-| trg_update_services_updated_at | Actualizar actualizado_en cuando cambia un servicio. |
-| trg_prevent_double_booking | Evitar que dos reservas activas usen el mismo bloque de disponibilidad. |
-| trg_release_block_on_cancel | Permitir que un bloque vuelva a estar disponible cuando una reserva se cancela o reagenda. |
+| tr_bookings_generate_tracking | Generar código de tracking al crear una reserva. |
+| tr_bookings_audit_insert | Registrar auditoría cuando se crea una reserva. |
+| tr_bookings_audit_update | Registrar auditoría cuando cambia una reserva. |
+| tr_update_tenants_updated_at | Actualizar actualizado_en cuando cambia un tenant. |
+| tr_update_services_updated_at | Actualizar actualizado_en cuando cambia un servicio. |
+| tr_prevent_double_booking | Evitar que dos reservas activas usen el mismo bloque de disponibilidad. |
+| tr_release_block_on_cancel | Permitir que un bloque vuelva a estar disponible cuando una reserva se cancela o reagenda. |
 
 Se proponen 7 para tener margen. La entrega final pide mínimo 3, el requisito general pide 5.

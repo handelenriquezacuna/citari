@@ -19,9 +19,9 @@ evidencia verificable en este repositorio:
 | Requisito | Evidencia | Comando de verificación | Estado |
 | --- | --- | --- | --- |
 | R1, normalización hasta 3FN documentada | [docs/database-and-sql.md](database-and-sql.md), sección "Normalización de la base de datos" (1FN/2FN/3FN explicadas tabla por tabla) | lectura del documento | [x] DONE |
-| R2, DDL completo | `database/scripts/02-create-tables.sql` (15 tablas, PK/FK) + `database/scripts/08-full-script.sql` (script único, una sola pasada) | `bash scripts/setup-db.sh` (ejecuta 01-07 en orden) o `sqlcmd -i database/scripts/08-full-script.sql` | [x] DONE |
-| R3, mínimo 10 tablas | 15 tablas en español ASCII (ver `docs/rename-map.csv` para la equivalencia con los nombres en inglés del diseño original) | `scripts/check-all.sql` (matriz de abajo) o `SELECT COUNT(*) FROM sys.tables` | [x] DONE (15/10) |
-| R4, mínimo 50 registros por tabla, datos coherentes | Seed data en `database/scripts/03-seed-data.sql`, generado por `scripts/gen-seed.py`; coherencia de FKs verificada por `scripts/smoke-db.sql` (12 casos) | `scripts/check-all.sql` (matriz de abajo) | [x] DONE (15/15 tablas >= 50) |
+| R2, DDL completo | `database/scripts/02-create-tables.sql` (24 tablas, PK/FK) + `database/scripts/08-full-script.sql` (script único, una sola pasada) | `bash scripts/setup-db.sh` (ejecuta 01-07 en orden) o `sqlcmd -i database/scripts/08-full-script.sql` | [x] DONE |
+| R3, mínimo 10 tablas | 24 tablas en español ASCII (ver `docs/rename-map.csv` para la equivalencia con los nombres en inglés del diseño original) | `scripts/check-all.sql` (matriz de abajo) o `SELECT COUNT(*) FROM sys.tables` | [x] DONE (24/10) |
+| R4, mínimo 50 registros por tabla, datos coherentes | Seed data en `database/scripts/03-seed-data.sql`, generado por `scripts/gen-seed.py`; coherencia de FKs verificada por `scripts/smoke-db.sql` (12 casos) | `scripts/check-all.sql` (matriz de abajo) | [x] DONE (24/24 tablas >= 50) |
 | R5, mínimo 10 stored procedures | 13 SPs en `database/scripts/04-procedures.sql`, documentados en [docs/sql-signatures.md](sql-signatures.md) sección 1 | `SELECT COUNT(*) FROM sys.procedures;` | [x] DONE (13/10) |
 | R6, mínimo 5 vistas multi-tabla | 7 vistas en `database/scripts/06-views.sql` (cada una referencia 2+ tablas base), documentadas en [docs/sql-signatures.md](sql-signatures.md) sección 2 | `SELECT COUNT(*) FROM sys.views;` | [x] DONE (7/5) |
 
@@ -49,7 +49,7 @@ docker exec db /opt/mssql-tools18/bin/sqlcmd \
   -S localhost -U sa -P "$SQLSERVER_PASSWORD" -C -I -d citari -i /tmp/ca.sql
 ```
 
-Muestra de conteos por tabla (las 15 tablas, mínimo 50 filas cada una;
+Muestra de conteos por tabla (las 24 tablas, mínimo 50 filas cada una;
 salida de un rebuild limpio desde cero con `docker compose down -v &&
 bash scripts/setup-db.sh`):
 
@@ -77,14 +77,14 @@ Matriz R3-R6 (salida literal):
 ```
  matriz de requisitos:
  R3 tablas: 15 (minimo 10) ............ OK
- R4 registros: 15/15 tablas >= 50 ..... OK
+ R4 registros: 24/24 tablas >= 50 ..... OK
  R5 procedimientos: 13 (minimo 10) .... OK
  R6 vistas multi-tabla: 7 (minimo 5) . OK
 ```
 
 Nota de coherencia del seed: las 10 reservaciones canceladas del seed tienen
 su bloque liberado (`bloque_disponibilidad_id = NULL`), replicando el efecto
-del trigger `trg_liberar_bloque_al_cancelar`; sus fechas históricas se
+del trigger `tr_liberar_bloque_al_cancelar`; sus fechas históricas se
 conservan en las columnas denormalizadas. Así los bloques de esas reservas
 son reservables de nuevo, igual que en operación real.
 
@@ -240,7 +240,7 @@ Base de datos
 
 - [x] Base de datos creada en SQL Server.
 - [x] Mínimo 10 tablas.
-- [x] 15 tablas propuestas creadas.
+- [x] 24 tablas propuestas creadas.
 - [x] Llaves primarias definidas.
 - [x] Llaves foráneas definidas.
 - [x] Relaciones documentadas.

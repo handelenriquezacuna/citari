@@ -10,9 +10,9 @@
 USE citari;
 GO
 
--- 1. vw_detalle_reservaciones ---------------------------------------------
+-- 1. v_detalle_reservaciones ---------------------------------------------
 -- Detalle completo de cada reservacion (7 tablas).
-CREATE OR ALTER VIEW dbo.vw_detalle_reservaciones
+CREATE OR ALTER VIEW dbo.v_detalle_reservaciones
 AS
 SELECT
     r.reserva_id,
@@ -21,7 +21,7 @@ SELECT
     d.slug                                             AS dominio_slug,
     c.cliente_id,
     CONCAT_WS(N' ', c.nombre, c.apellido_1, c.apellido_2) AS cliente_nombre,
-    c.correo                                           AS cliente_correo,
+    cco.correo                                         AS cliente_correo,
     s.servicio_id,
     s.nombre                                           AS servicio_nombre,
     s.duracion_minutos,
@@ -40,14 +40,22 @@ JOIN clientes c ON c.cliente_id = r.cliente_id
 JOIN servicios s ON s.servicio_id = r.servicio_id
 JOIN localidades l ON l.localidad_id = r.localidad_id
 JOIN estados_reservaciones er ON er.estado_reservacion_id = r.estado_reservacion_id
-LEFT JOIN codigos_de_rastreos cr ON cr.reserva_id = r.reserva_id;
+LEFT JOIN codigos_de_rastreos cr ON cr.reserva_id = r.reserva_id
+-- correo vive en clientes_correos (normalizado, 1:N); se toma el primero
+-- registrado como correo de contacto de la reservacion.
+OUTER APPLY (
+    SELECT TOP 1 cc.correo
+    FROM clientes_correos cc
+    WHERE cc.cliente_id = c.cliente_id
+    ORDER BY cc.cliente_correo_id
+) cco;
 GO
-PRINT '[06-views] vw_detalle_reservaciones ... OK';
+PRINT '[06-views] v_detalle_reservaciones ... OK';
 GO
 
--- 2. vw_agenda_diaria -------------------------------------------------------
+-- 2. v_agenda_diaria -------------------------------------------------------
 -- Pensada para filtrar por dominio_id + fecha.
-CREATE OR ALTER VIEW dbo.vw_agenda_diaria
+CREATE OR ALTER VIEW dbo.v_agenda_diaria
 AS
 SELECT
     r.dominio_id,
@@ -64,12 +72,12 @@ JOIN servicios s ON s.servicio_id = r.servicio_id
 JOIN localidades l ON l.localidad_id = r.localidad_id
 JOIN estados_reservaciones er ON er.estado_reservacion_id = r.estado_reservacion_id;
 GO
-PRINT '[06-views] vw_agenda_diaria ... OK';
+PRINT '[06-views] v_agenda_diaria ... OK';
 GO
 
--- 3. vw_servicios_publicos ---------------------------------------------------
+-- 3. v_servicios_publicos ---------------------------------------------------
 -- Solo servicios activos, de categorias activas, de dominios activos.
-CREATE OR ALTER VIEW dbo.vw_servicios_publicos
+CREATE OR ALTER VIEW dbo.v_servicios_publicos
 AS
 SELECT
     s.servicio_id,
@@ -88,12 +96,12 @@ WHERE s.activo = 1
   AND cat.activo = 1
   AND d.activo = 1;
 GO
-PRINT '[06-views] vw_servicios_publicos ... OK';
+PRINT '[06-views] v_servicios_publicos ... OK';
 GO
 
--- 4. vw_dashboard_dominio -----------------------------------------------------
+-- 4. v_dashboard_dominio -----------------------------------------------------
 -- Agregados por dominio (reservaciones, clientes, servicios, localidades).
-CREATE OR ALTER VIEW dbo.vw_dashboard_dominio
+CREATE OR ALTER VIEW dbo.v_dashboard_dominio
 AS
 SELECT
     d.dominio_id,
@@ -135,13 +143,13 @@ LEFT JOIN (
     GROUP BY dominio_id
 ) lo ON lo.dominio_id = d.dominio_id;
 GO
-PRINT '[06-views] vw_dashboard_dominio ... OK';
+PRINT '[06-views] v_dashboard_dominio ... OK';
 GO
 
--- 5. vw_estado_disponibilidad --------------------------------------------------
+-- 5. v_estado_disponibilidad --------------------------------------------------
 -- Estado de cada bloque de disponibilidad: reservado si tiene una
 -- reservacion en un estado distinto de 'cancelada'.
-CREATE OR ALTER VIEW dbo.vw_estado_disponibilidad
+CREATE OR ALTER VIEW dbo.v_estado_disponibilidad
 AS
 SELECT
     b.bloque_disponibilidad_id AS bloque_id,
@@ -166,17 +174,17 @@ LEFT JOIN reservaciones r
         WHERE er2.nombre = N'cancelada'
    );
 GO
-PRINT '[06-views] vw_estado_disponibilidad ... OK';
+PRINT '[06-views] v_estado_disponibilidad ... OK';
 GO
 
--- 6. vw_historial_reservaciones_cliente ----------------------------------------
-CREATE OR ALTER VIEW dbo.vw_historial_reservaciones_cliente
+-- 6. v_historial_reservaciones_cliente ----------------------------------------
+CREATE OR ALTER VIEW dbo.v_historial_reservaciones_cliente
 AS
 SELECT
     c.cliente_id,
     c.dominio_id,
     CONCAT_WS(N' ', c.nombre, c.apellido_1, c.apellido_2) AS cliente_nombre,
-    c.correo,
+    cco.correo,
     r.reserva_id,
     s.nombre AS servicio_nombre,
     r.fecha_inicio,
@@ -185,13 +193,21 @@ SELECT
 FROM clientes c
 JOIN reservaciones r ON r.cliente_id = c.cliente_id
 JOIN servicios s ON s.servicio_id = r.servicio_id
-JOIN estados_reservaciones er ON er.estado_reservacion_id = r.estado_reservacion_id;
+JOIN estados_reservaciones er ON er.estado_reservacion_id = r.estado_reservacion_id
+-- correo vive en clientes_correos (normalizado, 1:N); se toma el primero
+-- registrado como correo de contacto.
+OUTER APPLY (
+    SELECT TOP 1 cc.correo
+    FROM clientes_correos cc
+    WHERE cc.cliente_id = c.cliente_id
+    ORDER BY cc.cliente_correo_id
+) cco;
 GO
-PRINT '[06-views] vw_historial_reservaciones_cliente ... OK';
+PRINT '[06-views] v_historial_reservaciones_cliente ... OK';
 GO
 
--- 7. vw_demanda_servicios -------------------------------------------------------
-CREATE OR ALTER VIEW dbo.vw_demanda_servicios
+-- 7. v_demanda_servicios -------------------------------------------------------
+CREATE OR ALTER VIEW dbo.v_demanda_servicios
 AS
 SELECT
     s.servicio_id,
@@ -204,7 +220,7 @@ JOIN dominios d ON d.dominio_id = s.dominio_id
 LEFT JOIN reservaciones r ON r.servicio_id = s.servicio_id
 GROUP BY s.servicio_id, d.dominio_id, s.nombre;
 GO
-PRINT '[06-views] vw_demanda_servicios ... OK';
+PRINT '[06-views] v_demanda_servicios ... OK';
 GO
 
 PRINT '[06-views] 7/7 vistas creadas';

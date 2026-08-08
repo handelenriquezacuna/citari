@@ -164,7 +164,7 @@ Este flujo será simple. No es el centro del proyecto, pero permite justificar q
 | 3. Crear DER y modelo relacional | Se disenan entidades, atributos, relaciones y cardinalidades. |
 | 4. Especificar PK, FK y relaciones | Cada tabla tendrá llave primaria y las relaciones usaran llaves foráneas. |
 | 5. Normalización mínimo a 3FN | Se separan catálogos, estados, tipos de negocio y entidades dependientes. |
-| 6. Crear base mediante DDL, mínimo 10 tablas | Se propone una base de 15 tablas principales en SQL Server. |
+| 6. Crear base mediante DDL, mínimo 10 tablas | Se propone una base de 24 tablas principales en SQL Server. |
 | 7. Insertar al menos 50 registros por tabla | Se creará script de seed data o datos de prueba. |
 | 8. Programar al menos 10 procedimientos almacenados | Se crearán procedures para tenants, servicios, horarios y reservas. |
 | 9. Programar al menos 5 funciones | Se crearán funciones para tracking, disponibilidad y conteos. |
