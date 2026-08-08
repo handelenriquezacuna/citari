@@ -361,58 +361,37 @@ SERVICIOS = [
     ("Pack spa pareja", 120, 60000),
 ]
 
-# localidades: (nombre, direccion) - la localidad i pertenece al dominio i.
+# localidades: nombre - la localidad i pertenece al dominio i y a la
+# direccion i (direcciones i:1 con localidades en este seed).
 LOCALIDADES = [
-    ("Sede Central", "Del Banco Nacional 100 m sur, San Pedro"),
-    ("Sucursal Escazú", "Frente a Multiplaza Escazú, local 5"),
-    ("Santa Ana", "Contiguo al Palí de Santa Ana"),
-    ("Moravia", "300 m norte de la iglesia de Moravia"),
-    ("Desamparados", "Costado sur del parque de Desamparados"),
-    ("Rohrmoser", "Del Automercado 200 m oeste"),
-    ("Curridabat", "Plaza del Sol, local 12"),
-    ("Alajuela Central", "50 m este de la Catedral, Alajuela"),
-    ("Heredia", "Frente al Fortín, Heredia centro"),
-    ("Cartago", "100 m norte de las Ruinas, Cartago"),
-    ("Guadalupe", "Del antiguo Palí 150 m norte"),
-    ("San José centro", "Avenida Central, calle 9"),
-    ("Barrio Escalante", "Calle 33, contiguo a la soda"),
-    ("Tibás", "200 m sur del Mall San Pedro"),
-    ("Hatillo", "Frente al parque de Hatillo 3"),
-    ("Santa Ana Centro", "50 m este de la iglesia"),
-    ("San José Centro", "Calle 2, avenida 6"),
-    ("Rohrmoser II", "200 m norte del Colegio de Abogados"),
-    ("Pérez Zeledón", "100 m sur del Banco Popular"),
-    ("La Sabana", "Frente al Parque Metropolitano"),
-    ("Zapote", "Del cementerio 50 m norte"),
-    ("Tibás Norte", "200 m oeste de la escuela"),
-    ("Heredia Montaña", "Carretera a San Rafael 1 km"),
-    ("Curridabat Este", "Condominio Los Pinos, casa 8"),
-    ("Dos Ríos", "Del Ebáis 150 m sur"),
-    ("Sabana Sur", "Edificio Medical, piso 4"),
-    ("Barrio Amón", "Casa amarilla esquinera"),
-    ("Moravia Norte", "Contiguo a la bomba"),
-    ("San Pedro", "Del parque 100 m este"),
-    ("Heredia Centro", "Contiguo al Banco Nacional"),
-    ("Alajuela centro", "50 m oeste del parque"),
-    ("Escazú Este", "Plaza Itskatzú, local 3"),
-    ("Guanacaste", "Playa Hermosa, contiguo al hotel"),
-    ("Alajuela Oeste", "200 m sur de la gasolinera"),
-    ("Santo Domingo", "Frente a la iglesia católica"),
-    ("San José Centro", "Calle 11, avenida 3"),
-    ("Pérez Zeledón Sur", "200 m sur del hospital"),
-    ("Rohrmoser Centro", "Plaza Rohrmoser, local 7"),
-    ("Tres Ríos", "Del palí 100 m este"),
-    ("Curridabat Oeste", "Detrás del periódico La Nación"),
-    ("San José Central", "Calle 5, contiguo al Teatro"),
-    ("Barrio Escalante 2", "Calle 37, casa blanca esquina"),
-    ("San José Mujeres", "Barrio La California, local 9"),
-    ("Santa Ana Este", "Plaza Santa Ana, piso 2"),
-    ("Heredia Oeste", "Del parque 300 m oeste"),
-    ("San José Centro", "Calle 1, frente al parque"),
-    ("Escazú Lujo", "Multiplaza Escazú, local 20"),
-    ("San José 24H", "Calle 14, contiguo a la Clínica"),
-    ("Desamparados Sur", "100 m sur del mercado"),
-    ("Santa Ana Centro", "Contiguo al BAC San José"),
+    "Sede Central", "Sucursal Escazú", "Santa Ana", "Moravia", "Desamparados",
+    "Rohrmoser", "Curridabat", "Alajuela Central", "Heredia", "Cartago",
+    "Guadalupe", "San José centro", "Barrio Escalante", "Tibás", "Hatillo",
+    "Santa Ana Centro", "San José Centro", "Rohrmoser II", "Pérez Zeledón", "La Sabana",
+    "Zapote", "Tibás Norte", "Heredia Montaña", "Curridabat Este", "Dos Ríos",
+    "Sabana Sur", "Barrio Amón", "Moravia Norte", "San Pedro", "Heredia Centro",
+    "Alajuela centro", "Escazú Este", "Guanacaste", "Alajuela Oeste", "Santo Domingo",
+    "San José Centro Norte", "Pérez Zeledón Sur", "Rohrmoser Centro", "Tres Ríos", "Curridabat Oeste",
+    "San José Central", "Barrio Escalante 2", "San José Mujeres", "Santa Ana Este", "Heredia Oeste",
+    "San José Centro Sur", "Escazú Lujo", "San José 24H", "Desamparados Sur", "Santa Ana Sur",
+]
+
+# direcciones: (provincia, canton) - la distribucion territorial rota sobre
+# este pool; distrito y codigo_postal se derivan deterministamente por indice.
+PROVINCIAS_CANTONES = [
+    ("San José", "San José"), ("San José", "Escazú"), ("San José", "Desamparados"),
+    ("San José", "Puriscal"), ("San José", "Tarrazú"), ("San José", "Aserrí"),
+    ("San José", "Mora"), ("San José", "Goicoechea"), ("San José", "Santa Ana"),
+    ("San José", "Alajuelita"),
+    ("Alajuela", "Alajuela"), ("Alajuela", "San Ramón"), ("Alajuela", "Grecia"),
+    ("Alajuela", "San Mateo"), ("Alajuela", "Atenas"),
+    ("Cartago", "Cartago"), ("Cartago", "Paraíso"), ("Cartago", "La Unión"),
+    ("Cartago", "Jiménez"), ("Cartago", "Turrialba"),
+    ("Heredia", "Heredia"), ("Heredia", "Barva"), ("Heredia", "Santo Domingo"),
+    ("Heredia", "Santa Bárbara"), ("Heredia", "San Rafael"),
+    ("Guanacaste", "Liberia"), ("Guanacaste", "Nicoya"), ("Guanacaste", "Santa Cruz"),
+    ("Puntarenas", "Puntarenas"), ("Puntarenas", "Esparza"),
+    ("Limón", "Limón"), ("Limón", "Pococí"),
 ]
 
 NOTAS_CLIENTE_RESERVA = [
@@ -505,6 +484,16 @@ def horario_de(i):
     return dia, (13, 0), (18, 0), False      # turno tarde
 
 
+def direccion_de(i):
+    """Direccion i (1..50): provincia/canton rotan sobre el pool; distrito y
+    codigo_postal se derivan del indice, sin aleatoriedad."""
+    provincia, canton = PROVINCIAS_CANTONES[(i - 1) % len(PROVINCIAS_CANTONES)]
+    vuelta = (i - 1) // len(PROVINCIAS_CANTONES)
+    distrito = f"{canton} Centro" if vuelta == 0 else f"{canton} Distrito {vuelta + 1}"
+    codigo_postal = f"{10000 + i}"
+    return provincia, canton, distrito, codigo_postal
+
+
 def codigo_rastreo(i):
     a = CODIGO_ALFABETO[(i * 5) % len(CODIGO_ALFABETO)]
     b = CODIGO_ALFABETO[(i * 11) % len(CODIGO_ALFABETO)]
@@ -522,7 +511,7 @@ def build_sql():
     lines.append("-- ============================================================")
     lines.append("-- 03-seed-data.sql")
     lines.append("-- Proyecto: Citari - Citari")
-    lines.append("-- Contenido: datos de prueba (50 registros por tabla, 15 tablas)")
+    lines.append("-- Contenido: datos de prueba (50 registros por tabla, 24 tablas)")
     lines.append("-- GENERADO por scripts/gen-seed.py -- NO editar a mano.")
     lines.append("--   Regenerar:  python3 scripts/gen-seed.py")
     lines.append("--   Verificar:  python3 scripts/gen-seed.py --check")
@@ -553,54 +542,82 @@ def build_sql():
         rows.append([qs(f"estado_reserva_demo_{n:02d}"), qs(f"Estado de reservación de prueba {n} (relleno para R4)")])
     emit_insert(lines, "estados_reservaciones", ["nombre", "descripcion"], rows)
 
-    # -- superadmins: 5 reales + 45 de prueba --------------------------------
+    # -- superadmins: 5 reales + 45 de prueba (sin correo: normalizado) ------
     rows = []
+    superadmin_correos = []
     for (nom, ap1, ap2, correo) in SUPERADMINS_REALES:
-        rows.append([qs(nom), qs(ap1), qs(ap2), qs(correo), qs(HASH_ADMIN123), "1"])
+        rows.append([qs(nom), qs(ap1), qs(ap2), qs(HASH_ADMIN123), "1"])
+        superadmin_correos.append(correo)
     for i in range(6, ROWS_PER_TABLE + 1):
         idx = i - 6
         nom = SA_NOMBRES[idx % len(SA_NOMBRES)]
         ap1 = SA_APELLIDOS_1[idx % len(SA_APELLIDOS_1)]
         ap2 = SA_APELLIDOS_2[idx % len(SA_APELLIDOS_2)]
         correo = f"superadmin{i:02d}@citari.local"
-        rows.append([qs(nom), qs(ap1), qs(ap2), qs(correo), qs(HASH_ADMIN123), "1"])
+        rows.append([qs(nom), qs(ap1), qs(ap2), qs(HASH_ADMIN123), "1"])
+        superadmin_correos.append(correo)
     emit_insert(
         lines, "superadmins",
-        ["nombre", "apellido_1", "apellido_2", "correo", "contrasena_encriptada", "activo"],
+        ["nombre", "apellido_1", "apellido_2", "contrasena_encriptada", "activo"],
         rows,
     )
 
-    # -- dominios (estado 2 = activo) ----------------------------------------
+    # -- superadmins_correos (correo i -> superadmin i, 1FN) -----------------
+    rows = [[str(i), qs(correo)] for i, correo in enumerate(superadmin_correos, start=1)]
+    emit_insert(lines, "superadmins_correos", ["superadmin_id", "correo"], rows)
+
+    # -- dominios (estado 2 = activo; sin correo/telefono: normalizados) ----
     rows = []
     for (tipo, nombre, slug, correo, tel, desc, msg) in DOMINIOS:
-        rows.append([str(tipo), "2", qs(nombre), qs(slug), qs(correo), qs(tel), qs(desc), "NULL", qs(msg), "1"])
+        rows.append([str(tipo), "2", qs(nombre), qs(slug), qs(desc), "NULL", qs(msg), "1"])
     emit_insert(
         lines, "dominios",
-        ["tipo_negocio_id", "dominio_estado_id", "nombre", "slug", "correo",
-         "telefono", "descripcion", "logo_url", "mensaje_publico", "activo"],
+        ["tipo_negocio_id", "dominio_estado_id", "nombre", "slug",
+         "descripcion", "logo_url", "mensaje_publico", "activo"],
         rows,
     )
 
-    # -- duenos_de_dominios (dueno i -> dominio i) ---------------------------
+    # -- dominios_correos / dominios_telefonos (1:N por dominio, 1FN) -------
+    rows = [[str(i), qs(correo)] for i, (_, _, _, correo, _, _, _) in enumerate(DOMINIOS, start=1)]
+    emit_insert(lines, "dominios_correos", ["dominio_id", "correo"], rows)
+
+    rows = [[str(i), qs(tel)] for i, (_, _, _, _, tel, _, _) in enumerate(DOMINIOS, start=1)]
+    emit_insert(lines, "dominios_telefonos", ["dominio_id", "telefono"], rows)
+
+    # -- duenos_de_dominios (dueno i -> dominio i; sin correo/telefono) -----
     rows = []
     for i, (nom, ap1, ap2, correo, tel) in enumerate(DUENOS, start=1):
-        rows.append([str(i), qs(nom), qs(ap1), qs(ap2), qs(correo), qs(HASH_BOWNER123), qs(tel), "1"])
+        rows.append([str(i), qs(nom), qs(ap1), qs(ap2), qs(HASH_BOWNER123), "1"])
     emit_insert(
         lines, "duenos_de_dominios",
-        ["dominio_id", "nombre", "apellido_1", "apellido_2", "correo",
-         "contrasena_encriptada", "telefono", "activo"],
+        ["dominio_id", "nombre", "apellido_1", "apellido_2",
+         "contrasena_encriptada", "activo"],
         rows,
     )
 
-    # -- clientes (cliente i -> dominio i) -----------------------------------
+    # -- duenos_de_dominios_correos / _telefonos (1:N por dueno, 1FN) -------
+    rows = [[str(i), qs(correo)] for i, (_, _, _, correo, _) in enumerate(DUENOS, start=1)]
+    emit_insert(lines, "duenos_de_dominios_correos", ["dueno_id", "correo"], rows)
+
+    rows = [[str(i), qs(tel)] for i, (_, _, _, _, tel) in enumerate(DUENOS, start=1)]
+    emit_insert(lines, "duenos_de_dominios_telefonos", ["dueno_id", "telefono"], rows)
+
+    # -- clientes (cliente i -> dominio i; sin correo/telefono) --------------
     rows = []
     for i, (nom, ap1, ap2, correo, tel, notas) in enumerate(CLIENTES, start=1):
-        rows.append([str(i), qs(nom), qs(ap1), qs(ap2), qs(correo), qs(tel), qs(notas)])
+        rows.append([str(i), qs(nom), qs(ap1), qs(ap2), qs(notas)])
     emit_insert(
         lines, "clientes",
-        ["dominio_id", "nombre", "apellido_1", "apellido_2", "correo", "telefono", "notas"],
+        ["dominio_id", "nombre", "apellido_1", "apellido_2", "notas"],
         rows,
     )
+
+    # -- clientes_correos / clientes_telefonos (1:N por cliente, 1FN) -------
+    rows = [[str(i), qs(correo)] for i, (_, _, _, correo, _, _) in enumerate(CLIENTES, start=1)]
+    emit_insert(lines, "clientes_correos", ["cliente_id", "correo"], rows)
+
+    rows = [[str(i), qs(tel)] for i, (_, _, _, _, tel, _) in enumerate(CLIENTES, start=1)]
+    emit_insert(lines, "clientes_telefonos", ["cliente_id", "telefono"], rows)
 
     # -- categorias_servicios (categoria i -> dominio i) ---------------------
     rows = []
@@ -624,16 +641,29 @@ def build_sql():
         rows,
     )
 
-    # -- localidades (localidad i -> dominio i, sede principal) --------------
+    # -- direcciones (direccion i -> localidad i, catalogo territorial) -----
     rows = []
-    for i, (nombre, direccion) in enumerate(LOCALIDADES, start=1):
-        tel = "2256-{:04d}".format(500 + i)
-        rows.append([str(i), qs(nombre), qs(direccion), qs(tel), "1", "1"])
+    for i in range(1, ROWS_PER_TABLE + 1):
+        provincia, canton, distrito, cpostal = direccion_de(i)
+        rows.append([qs(provincia), qs(canton), qs(distrito), qs(cpostal)])
+    emit_insert(lines, "direcciones", ["provincia", "canton", "distrito", "codigo_postal"], rows)
+
+    # -- localidades (localidad i -> dominio i, direccion i, sede principal) -
+    rows = []
+    for i, nombre in enumerate(LOCALIDADES, start=1):
+        rows.append([str(i), str(i), qs(nombre), "1", "1"])
     emit_insert(
         lines, "localidades",
-        ["dominio_id", "nombre", "direccion", "telefono", "principal", "activo"],
+        ["dominio_id", "direccion_id", "nombre", "principal", "activo"],
         rows,
     )
+
+    # -- localidades_telefonos (telefono i -> localidad i, 1FN) --------------
+    rows = []
+    for i in range(1, ROWS_PER_TABLE + 1):
+        tel = "2256-{:04d}".format(500 + i)
+        rows.append([str(i), qs(tel)])
+    emit_insert(lines, "localidades_telefonos", ["localidad_id", "telefono"], rows)
 
     # -- horarios (horario i -> dominio i, localidad i) ----------------------
     rows = []
@@ -672,7 +702,7 @@ def build_sql():
         nota_cli = NOTAS_CLIENTE_RESERVA[(i - 1) % len(NOTAS_CLIENTE_RESERVA)]
         nota_int = "Cliente frecuente, dar seguimiento" if i % 7 == 0 else None
         # Reservas canceladas: bloque liberado (FK NULL), igual que hace
-        # trg_liberar_bloque_al_cancelar en runtime. El seed inserta directo
+        # tr_liberar_bloque_al_cancelar en runtime. El seed inserta directo
         # y no dispara ese trigger (es de UPDATE); sin esto, el bloque queda
         # retenido por el indice unico filtrado y reservarlo daria conflicto.
         bloque = "NULL" if estado == estado_cancelada else str(i)
@@ -711,7 +741,7 @@ def build_sql():
         rows,
     )
 
-    lines.append("PRINT '[03-seed-data] 15/15 tablas pobladas';")
+    lines.append("PRINT '[03-seed-data] 24/24 tablas pobladas';")
     lines.append("GO")
     lines.append("")
     return "\n".join(lines)
@@ -736,7 +766,7 @@ def main():
         sys.exit(1)
 
     OUTPUT_PATH.write_bytes(data)
-    print(f"[gen-seed] generado {OUTPUT_PATH.relative_to(REPO_ROOT)} (15 tablas, {15 * ROWS_PER_TABLE} filas) ... OK")
+    print(f"[gen-seed] generado {OUTPUT_PATH.relative_to(REPO_ROOT)} (24 tablas, {24 * ROWS_PER_TABLE} filas) ... OK")
 
 
 if __name__ == "__main__":

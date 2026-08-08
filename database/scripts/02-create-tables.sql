@@ -1,7 +1,12 @@
-﻿-- ============================================================
+-- ============================================================
 -- 02-create-tables.sql
 -- Proyecto: Citari - Citari
--- Contenido: crea las 15 tablas y relaciones (identificadores en espanol, ASCII)
+-- Contenido: crea las 24 tablas y relaciones (identificadores en espanol, ASCII)
+-- Modelo alineado al Avance #2 (normalizacion a 3FN): correo y telefono son
+-- atributos multivaluados y viven en tablas propias por cada entidad
+-- (superadmins, dominios, duenos_de_dominios, clientes, localidades); la
+-- division territorial de una localidad (provincia/canton/distrito/codigo
+-- postal) vive en el catalogo reutilizable direcciones.
 -- Ver docs/rename-map.csv para la equivalencia con los nombres en ingles.
 -- ============================================================
 
@@ -35,6 +40,21 @@ CREATE TABLE estados_reservaciones (
 PRINT '[02-create-tables] tabla estados_reservaciones ... OK';
 GO
 
+-- Direcciones ---------------------------------------------------------------
+-- Catalogo de division territorial (provincia/canton/distrito/codigo postal):
+-- se separa de localidades porque la direccion detallada de calle vive en la
+-- propia localidad, mientras que la division territorial es un catalogo
+-- reutilizable entre varias localidades.
+CREATE TABLE direcciones (
+    direccion_id  INT IDENTITY(1,1) PRIMARY KEY,
+    provincia     NVARCHAR(100) NOT NULL,
+    canton        NVARCHAR(100) NOT NULL,
+    distrito      NVARCHAR(100) NOT NULL,
+    codigo_postal NVARCHAR(10) NOT NULL
+);
+PRINT '[02-create-tables] tabla direcciones ... OK';
+GO
+
 -- Superadmins -------------------------------------------------------------
 
 CREATE TABLE superadmins (
@@ -42,13 +62,22 @@ CREATE TABLE superadmins (
     nombre                 NVARCHAR(100) NOT NULL,
     apellido_1             NVARCHAR(100) NOT NULL,
     apellido_2             NVARCHAR(100) NULL,
-    correo                 NVARCHAR(254) NOT NULL UNIQUE,
     contrasena_encriptada  NVARCHAR(512) NOT NULL,
     activo                 BIT NOT NULL DEFAULT 1,
     creado_en              DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
     actualizado_en         DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 PRINT '[02-create-tables] tabla superadmins ... OK';
+GO
+
+-- correo es multivaluado (1FN): un superadmin puede tener mas de una
+-- direccion de correo, por lo que vive en su propia tabla.
+CREATE TABLE superadmins_correos (
+    superadmin_correo_id INT IDENTITY(1,1) PRIMARY KEY,
+    superadmin_id         INT NOT NULL REFERENCES superadmins(superadmin_id),
+    correo                NVARCHAR(254) NOT NULL UNIQUE
+);
+PRINT '[02-create-tables] tabla superadmins_correos ... OK';
 GO
 
 -- Dominios y duenos --------------------------------------------------------
@@ -59,8 +88,6 @@ CREATE TABLE dominios (
     dominio_estado_id INT NOT NULL REFERENCES estados_dominios(dominio_estado_id),
     nombre            NVARCHAR(200) NOT NULL,
     slug              NVARCHAR(100) NOT NULL UNIQUE,
-    correo            NVARCHAR(254) NOT NULL,
-    telefono          NVARCHAR(30) NULL,
     descripcion       NVARCHAR(MAX) NULL,
     logo_url          NVARCHAR(500) NULL,
     mensaje_publico   NVARCHAR(500) NULL,
@@ -71,15 +98,31 @@ CREATE TABLE dominios (
 PRINT '[02-create-tables] tabla dominios ... OK';
 GO
 
+-- correo y telefono son multivaluados (1FN): un dominio puede publicar mas
+-- de un correo/telefono de contacto, por lo que viven en tablas propias.
+CREATE TABLE dominios_correos (
+    dominio_correo_id INT IDENTITY(1,1) PRIMARY KEY,
+    dominio_id        INT NOT NULL REFERENCES dominios(dominio_id),
+    correo            NVARCHAR(254) NOT NULL
+);
+PRINT '[02-create-tables] tabla dominios_correos ... OK';
+GO
+
+CREATE TABLE dominios_telefonos (
+    dominio_telefono_id INT IDENTITY(1,1) PRIMARY KEY,
+    dominio_id           INT NOT NULL REFERENCES dominios(dominio_id),
+    telefono              NVARCHAR(30) NOT NULL
+);
+PRINT '[02-create-tables] tabla dominios_telefonos ... OK';
+GO
+
 CREATE TABLE duenos_de_dominios (
     dueno_id               INT IDENTITY(1,1) PRIMARY KEY,
     dominio_id             INT NOT NULL REFERENCES dominios(dominio_id),
     nombre                 NVARCHAR(100) NOT NULL,
     apellido_1             NVARCHAR(100) NOT NULL,
     apellido_2             NVARCHAR(100) NULL,
-    correo                 NVARCHAR(254) NOT NULL,
     contrasena_encriptada  NVARCHAR(512) NOT NULL,
-    telefono               NVARCHAR(30) NULL,
     activo                 BIT NOT NULL DEFAULT 1,
     creado_en              DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
     actualizado_en         DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
@@ -87,21 +130,55 @@ CREATE TABLE duenos_de_dominios (
 PRINT '[02-create-tables] tabla duenos_de_dominios ... OK';
 GO
 
+-- correo y telefono son multivaluados (1FN): un dueno puede registrar mas
+-- de un correo/telefono de contacto, por lo que viven en tablas propias.
+CREATE TABLE duenos_de_dominios_correos (
+    dueno_correo_id INT IDENTITY(1,1) PRIMARY KEY,
+    dueno_id         INT NOT NULL REFERENCES duenos_de_dominios(dueno_id),
+    correo           NVARCHAR(254) NOT NULL
+);
+PRINT '[02-create-tables] tabla duenos_de_dominios_correos ... OK';
+GO
+
+CREATE TABLE duenos_de_dominios_telefonos (
+    dueno_telefono_id INT IDENTITY(1,1) PRIMARY KEY,
+    dueno_id           INT NOT NULL REFERENCES duenos_de_dominios(dueno_id),
+    telefono           NVARCHAR(30) NOT NULL
+);
+PRINT '[02-create-tables] tabla duenos_de_dominios_telefonos ... OK';
+GO
+
 -- Clientes ---------------------------------------------------------------
 
 CREATE TABLE clientes (
-    cliente_id  INT IDENTITY(1,1) PRIMARY KEY,
-    dominio_id  INT NOT NULL REFERENCES dominios(dominio_id),
-    nombre      NVARCHAR(100) NOT NULL,
-    apellido_1  NVARCHAR(100) NOT NULL,
-    apellido_2  NVARCHAR(100) NULL,
-    correo      NVARCHAR(254) NOT NULL,
-    telefono    NVARCHAR(30) NOT NULL,
-    notas       NVARCHAR(500) NULL,
-    creado_en   DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    cliente_id     INT IDENTITY(1,1) PRIMARY KEY,
+    dominio_id     INT NOT NULL REFERENCES dominios(dominio_id),
+    nombre         NVARCHAR(100) NOT NULL,
+    apellido_1     NVARCHAR(100) NOT NULL,
+    apellido_2     NVARCHAR(100) NULL,
+    notas          NVARCHAR(500) NULL,
+    creado_en      DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
     actualizado_en DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 PRINT '[02-create-tables] tabla clientes ... OK';
+GO
+
+-- correo y telefono son multivaluados (1FN): un cliente puede reservar con
+-- mas de un correo/telefono de contacto, por lo que viven en tablas propias.
+CREATE TABLE clientes_correos (
+    cliente_correo_id INT IDENTITY(1,1) PRIMARY KEY,
+    cliente_id         INT NOT NULL REFERENCES clientes(cliente_id),
+    correo             NVARCHAR(254) NOT NULL
+);
+PRINT '[02-create-tables] tabla clientes_correos ... OK';
+GO
+
+CREATE TABLE clientes_telefonos (
+    cliente_telefono_id INT IDENTITY(1,1) PRIMARY KEY,
+    cliente_id            INT NOT NULL REFERENCES clientes(cliente_id),
+    telefono               NVARCHAR(30) NOT NULL
+);
+PRINT '[02-create-tables] tabla clientes_telefonos ... OK';
 GO
 
 -- Servicios ---------------------------------------------------------------
@@ -137,17 +214,26 @@ GO
 -- Localidades y horarios --------------------------------------------------
 
 CREATE TABLE localidades (
-    localidad_id INT IDENTITY(1,1) PRIMARY KEY,
-    dominio_id   INT NOT NULL REFERENCES dominios(dominio_id),
-    nombre       NVARCHAR(200) NOT NULL,
-    direccion    NVARCHAR(500) NOT NULL,
-    telefono     NVARCHAR(30) NULL,
-    principal    BIT NOT NULL DEFAULT 0,
-    activo       BIT NOT NULL DEFAULT 1,
-    creado_en    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    localidad_id   INT IDENTITY(1,1) PRIMARY KEY,
+    dominio_id     INT NOT NULL REFERENCES dominios(dominio_id),
+    direccion_id   INT NOT NULL REFERENCES direcciones(direccion_id),
+    nombre         NVARCHAR(200) NOT NULL,
+    principal      BIT NOT NULL DEFAULT 0,
+    activo         BIT NOT NULL DEFAULT 1,
+    creado_en      DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
     actualizado_en DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 PRINT '[02-create-tables] tabla localidades ... OK';
+GO
+
+-- telefono es multivaluado (1FN): una localidad puede publicar mas de un
+-- telefono de contacto, por lo que vive en su propia tabla.
+CREATE TABLE localidades_telefonos (
+    localidad_telefono_id INT IDENTITY(1,1) PRIMARY KEY,
+    localidad_id            INT NOT NULL REFERENCES localidades(localidad_id),
+    telefono                 NVARCHAR(30) NOT NULL
+);
+PRINT '[02-create-tables] tabla localidades_telefonos ... OK';
 GO
 
 CREATE TABLE horarios (
@@ -233,5 +319,5 @@ CREATE TABLE registros (
 PRINT '[02-create-tables] tabla registros ... OK';
 GO
 
-PRINT '[02-create-tables] 15/15 tablas creadas';
+PRINT '[02-create-tables] 24/24 tablas creadas';
 GO

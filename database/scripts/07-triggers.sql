@@ -19,13 +19,13 @@
 --          se salten esos procedimientos.
 --
 -- Lista de triggers:
---   1. trg_reservaciones_generar_rastreo   AFTER INSERT         reservaciones
---   2. trg_reservaciones_auditar_insert    AFTER INSERT         reservaciones
---   3. trg_reservaciones_auditar_update    AFTER UPDATE         reservaciones
---   4. trg_dominios_actualizado_en         AFTER UPDATE         dominios
---   5. trg_servicios_actualizado_en        AFTER UPDATE         servicios
---   6. trg_prevenir_doble_reservacion      AFTER INSERT, UPDATE reservaciones
---   7. trg_liberar_bloque_al_cancelar      AFTER UPDATE         reservaciones
+--   1. tr_reservaciones_generar_rastreo   AFTER INSERT         reservaciones
+--   2. tr_reservaciones_auditar_insert    AFTER INSERT         reservaciones
+--   3. tr_reservaciones_auditar_update    AFTER UPDATE         reservaciones
+--   4. tr_dominios_actualizado_en         AFTER UPDATE         dominios
+--   5. tr_servicios_actualizado_en        AFTER UPDATE         servicios
+--   6. tr_prevenir_doble_reservacion      AFTER INSERT, UPDATE reservaciones
+--   7. tr_liberar_bloque_al_cancelar      AFTER UPDATE         reservaciones
 --
 -- Nota sobre recursion: la base de datos citari usa el valor por
 -- defecto de RECURSIVE_TRIGGERS (OFF), que ya bloquea la recursion
@@ -41,7 +41,7 @@ USE citari;
 GO
 
 -- ------------------------------------------------------------
--- 1. trg_reservaciones_generar_rastreo
+-- 1. tr_reservaciones_generar_rastreo
 -- AFTER INSERT en reservaciones: crea una fila en codigos_de_rastreos
 -- por cada reserva insertada (soporta INSERT multifila). El codigo se
 -- genera con dbo.fn_generar_codigo_rastreo(NEWID()); las funciones
@@ -49,7 +49,7 @@ GO
 -- semilla se genera aqui (una semilla distinta por fila via
 -- CROSS APPLY) y se pasa como parametro a la funcion.
 -- ------------------------------------------------------------
-CREATE OR ALTER TRIGGER trg_reservaciones_generar_rastreo
+CREATE OR ALTER TRIGGER tr_reservaciones_generar_rastreo
 ON reservaciones
 AFTER INSERT
 AS
@@ -66,16 +66,16 @@ BEGIN
     CROSS APPLY (SELECT NEWID() AS semilla) x;
 END
 GO
-PRINT ' [07-triggers] trg_reservaciones_generar_rastreo ... OK';
+PRINT ' [07-triggers] tr_reservaciones_generar_rastreo ... OK';
 GO
 
 -- ------------------------------------------------------------
--- 2. trg_reservaciones_auditar_insert
+-- 2. tr_reservaciones_auditar_insert
 -- AFTER INSERT en reservaciones: registra en "registros" la creacion
 -- de cada reserva. dueno_id/superadmin_id quedan NULL; el actor lo
 -- registrara la API en un futuro work package.
 -- ------------------------------------------------------------
-CREATE OR ALTER TRIGGER trg_reservaciones_auditar_insert
+CREATE OR ALTER TRIGGER tr_reservaciones_auditar_insert
 ON reservaciones
 AFTER INSERT
 AS
@@ -99,11 +99,11 @@ BEGIN
     JOIN estados_reservaciones er ON er.estado_reservacion_id = i.estado_reservacion_id;
 END
 GO
-PRINT ' [07-triggers] trg_reservaciones_auditar_insert ... OK';
+PRINT ' [07-triggers] tr_reservaciones_auditar_insert ... OK';
 GO
 
 -- ------------------------------------------------------------
--- 3. trg_reservaciones_auditar_update
+-- 3. tr_reservaciones_auditar_update
 -- AFTER UPDATE en reservaciones: registra en "registros" unicamente
 -- cuando cambia estado_reservacion_id (ignora otros cambios, por
 -- ejemplo el reagendamiento de fechas o la liberacion de bloque hecha
@@ -112,7 +112,7 @@ GO
 -- bloque_disponibilidad_id = NULL) no toca esa columna, asi que este
 -- trigger no vuelve a insertar una fila de auditoria para ese caso.
 -- ------------------------------------------------------------
-CREATE OR ALTER TRIGGER trg_reservaciones_auditar_update
+CREATE OR ALTER TRIGGER tr_reservaciones_auditar_update
 ON reservaciones
 AFTER UPDATE
 AS
@@ -140,11 +140,11 @@ BEGIN
     WHERE i.estado_reservacion_id <> d.estado_reservacion_id;
 END
 GO
-PRINT ' [07-triggers] trg_reservaciones_auditar_update ... OK';
+PRINT ' [07-triggers] tr_reservaciones_auditar_update ... OK';
 GO
 
 -- ------------------------------------------------------------
--- 4. trg_dominios_actualizado_en
+-- 4. tr_dominios_actualizado_en
 -- AFTER UPDATE en dominios: mantiene actualizado_en = SYSUTCDATETIME().
 -- Guarda anti-recursion elegida: IF UPDATE(actualizado_en) RETURN.
 -- Si la sentencia que disparo el trigger ya referencio esa columna en
@@ -156,7 +156,7 @@ GO
 -- RECURSIVE_TRIGGERS) encontraria UPDATE(actualizado_en) = TRUE y
 -- retornaria de inmediato, sin bucle infinito.
 -- ------------------------------------------------------------
-CREATE OR ALTER TRIGGER trg_dominios_actualizado_en
+CREATE OR ALTER TRIGGER tr_dominios_actualizado_en
 ON dominios
 AFTER UPDATE
 AS
@@ -172,15 +172,15 @@ BEGIN
     JOIN inserted i ON i.dominio_id = d.dominio_id;
 END
 GO
-PRINT ' [07-triggers] trg_dominios_actualizado_en ... OK';
+PRINT ' [07-triggers] tr_dominios_actualizado_en ... OK';
 GO
 
 -- ------------------------------------------------------------
--- 5. trg_servicios_actualizado_en
+-- 5. tr_servicios_actualizado_en
 -- AFTER UPDATE en servicios: mismo patron y misma guarda anti-recursion
--- que trg_dominios_actualizado_en (IF UPDATE(actualizado_en) RETURN).
+-- que tr_dominios_actualizado_en (IF UPDATE(actualizado_en) RETURN).
 -- ------------------------------------------------------------
-CREATE OR ALTER TRIGGER trg_servicios_actualizado_en
+CREATE OR ALTER TRIGGER tr_servicios_actualizado_en
 ON servicios
 AFTER UPDATE
 AS
@@ -196,11 +196,11 @@ BEGIN
     JOIN inserted i ON i.servicio_id = s.servicio_id;
 END
 GO
-PRINT ' [07-triggers] trg_servicios_actualizado_en ... OK';
+PRINT ' [07-triggers] tr_servicios_actualizado_en ... OK';
 GO
 
 -- ------------------------------------------------------------
--- 6. trg_prevenir_doble_reservacion
+-- 6. tr_prevenir_doble_reservacion
 -- AFTER INSERT, UPDATE en reservaciones: si mas de una reservacion NO
 -- cancelada apunta al mismo bloque_disponibilidad_id (no NULL),
 -- revierte la transaccion con ROLLBACK + THROW 50043 (409).
@@ -216,7 +216,7 @@ GO
 -- en el futuro se relajara o se eliminara por error el indice unico
 -- filtrado).
 -- ------------------------------------------------------------
-CREATE OR ALTER TRIGGER trg_prevenir_doble_reservacion
+CREATE OR ALTER TRIGGER tr_prevenir_doble_reservacion
 ON reservaciones
 AFTER INSERT, UPDATE
 AS
@@ -240,11 +240,11 @@ BEGIN
     END
 END
 GO
-PRINT ' [07-triggers] trg_prevenir_doble_reservacion ... OK';
+PRINT ' [07-triggers] tr_prevenir_doble_reservacion ... OK';
 GO
 
 -- ------------------------------------------------------------
--- 7. trg_liberar_bloque_al_cancelar
+-- 7. tr_liberar_bloque_al_cancelar
 -- AFTER UPDATE en reservaciones. Dos comportamientos independientes:
 --
 -- (a) Cancelacion: cuando estado_reservacion_id TRANSICIONA hacia
@@ -273,7 +273,7 @@ GO
 -- estado hacia 'cancelada'; (b) exige que el estado NO haya cambiado
 -- el bloque hacia NULL sino hacia otro bloque no nulo distinto.
 -- ------------------------------------------------------------
-CREATE OR ALTER TRIGGER trg_liberar_bloque_al_cancelar
+CREATE OR ALTER TRIGGER tr_liberar_bloque_al_cancelar
 ON reservaciones
 AFTER UPDATE
 AS
@@ -335,7 +335,7 @@ BEGIN
     END
 END
 GO
-PRINT ' [07-triggers] trg_liberar_bloque_al_cancelar ... OK';
+PRINT ' [07-triggers] tr_liberar_bloque_al_cancelar ... OK';
 GO
 
 PRINT ' [07-triggers] 7/7 triggers creados';

@@ -67,11 +67,17 @@ BEGIN
         (SELECT dominio_estado_id FROM estados_dominios WHERE nombre = N'pendiente');
 
     INSERT INTO dominios
-        (tipo_negocio_id, dominio_estado_id, nombre, slug, correo, telefono, descripcion, logo_url, mensaje_publico)
+        (tipo_negocio_id, dominio_estado_id, nombre, slug, descripcion, logo_url, mensaje_publico)
     VALUES
-        (@tipo_negocio_id, @estado_pendiente_id, @nombre, @slug, @correo, @telefono, @descripcion, @logo_url, @mensaje_publico);
+        (@tipo_negocio_id, @estado_pendiente_id, @nombre, @slug, @descripcion, @logo_url, @mensaje_publico);
 
     SET @dominio_id = SCOPE_IDENTITY();
+
+    -- correo/telefono son multivaluados (normalizados en tablas propias):
+    -- se insertan aparte, ya con el dominio_id recien generado.
+    INSERT INTO dominios_correos (dominio_id, correo) VALUES (@dominio_id, @correo);
+    IF @telefono IS NOT NULL
+        INSERT INTO dominios_telefonos (dominio_id, telefono) VALUES (@dominio_id, @telefono);
 END
 GO
 PRINT ' [04-procedures] sp_crear_dominio ... OK';
@@ -98,11 +104,17 @@ BEGIN
         THROW 50021, 'El dominio especificado no existe.', 1;
 
     INSERT INTO duenos_de_dominios
-        (dominio_id, nombre, apellido_1, apellido_2, correo, contrasena_encriptada, telefono)
+        (dominio_id, nombre, apellido_1, apellido_2, contrasena_encriptada)
     VALUES
-        (@dominio_id, @nombre, @apellido_1, @apellido_2, @correo, @contrasena_encriptada, @telefono);
+        (@dominio_id, @nombre, @apellido_1, @apellido_2, @contrasena_encriptada);
 
     SET @dueno_id = SCOPE_IDENTITY();
+
+    -- correo/telefono son multivaluados (normalizados en tablas propias):
+    -- se insertan aparte, ya con el dueno_id recien generado.
+    INSERT INTO duenos_de_dominios_correos (dueno_id, correo) VALUES (@dueno_id, @correo);
+    IF @telefono IS NOT NULL
+        INSERT INTO duenos_de_dominios_telefonos (dueno_id, telefono) VALUES (@dueno_id, @telefono);
 END
 GO
 PRINT ' [04-procedures] sp_crear_dueno ... OK';
@@ -300,18 +312,26 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM dominios WHERE dominio_id = @dominio_id)
         THROW 50021, 'El dominio especificado no existe.', 1;
 
-    SELECT @cliente_id = cliente_id
-    FROM clientes
-    WHERE dominio_id = @dominio_id AND correo = @correo;
+    -- correo vive en clientes_correos (normalizado): la reutilizacion del
+    -- cliente se busca por ese lado en vez de una columna en clientes.
+    SELECT @cliente_id = c.cliente_id
+    FROM clientes c
+    JOIN clientes_correos cc ON cc.cliente_id = c.cliente_id
+    WHERE c.dominio_id = @dominio_id AND cc.correo = @correo;
 
     IF @cliente_id IS NULL
     BEGIN
         INSERT INTO clientes
-            (dominio_id, nombre, apellido_1, apellido_2, correo, telefono, notas)
+            (dominio_id, nombre, apellido_1, apellido_2, notas)
         VALUES
-            (@dominio_id, @nombre, @apellido_1, @apellido_2, @correo, @telefono, @notas);
+            (@dominio_id, @nombre, @apellido_1, @apellido_2, @notas);
 
         SET @cliente_id = SCOPE_IDENTITY();
+
+        -- correo/telefono son multivaluados (normalizados en tablas propias):
+        -- se insertan aparte, ya con el cliente_id recien generado.
+        INSERT INTO clientes_correos (cliente_id, correo) VALUES (@cliente_id, @correo);
+        INSERT INTO clientes_telefonos (cliente_id, telefono) VALUES (@cliente_id, @telefono);
     END
 END
 GO

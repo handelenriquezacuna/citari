@@ -12,10 +12,10 @@
 
 | Area | Propuesta | Como quedo construido |
 | --- | --- | --- |
-| Nombres de objetos SQL | Inglés (sp_create_booking, vw_booking_details...) | Español ASCII (sp_crear_reservacion, vw_detalle_reservaciones...) alineado al modelo MR del drawio |
+| Nombres de objetos SQL | Inglés (sp_create_booking, v_booking_details...) | Español ASCII (sp_crear_reservacion, v_detalle_reservaciones...) alineado al modelo MR del drawio |
 | Procedimientos | 12 propuestos | 13 construidos (se agrego sp_confirmar_reservacion como transición explicita) |
 | Funciones | 6 propuestas | 6 construidas (mismos propósitos, nombres en español) |
-| Vistas | 6 propuestas | 7 construidas (se agrego vw_demanda_servicios para el reporte de demanda) |
+| Vistas | 6 propuestas | 7 construidas (se agrego v_demanda_servicios para el reporte de demanda) |
 | Triggers | 5-7 propuestos | 7 construidos |
 | Side-effects (tracking, auditoría, liberar bloque) | El SP podia hacerlos o delegarlos | Regla anti-doble-efecto: viven ÚNICAMENTE en triggers; los SPs validan y orquestan |
 | Bloque único por reserva | UNIQUE simple implicito | Índice único FILTRADO ux_reservaciones_bloque (permite múltiples reservas canceladas con FK NULL) |
@@ -27,7 +27,7 @@
 | Seed | Ejemplos genéricos (Barberia Elite, spa-luna) | 50 filas coherentes por tabla generadas por scripts/gen-seed.py (determinístico); reservas canceladas del seed liberan su bloque |
 | Auditoría del seed y triggers | Acciones genéricas | dominio_creado (seed), reserva_creada y reserva_actualizada (triggers) |
 
-Todo lo demás (las 15 tablas, sus atributos, relaciones y la normalización)
+Todo lo demás (las 24 tablas, sus atributos, relaciones y la normalización)
 se construyo igual que la propuesta, solo con los nombres físicos en español.
 
 ## Tablas construidas
@@ -101,7 +101,7 @@ para un servicio, y cada reserva recibe un código de rastreo automático.
 
 Para entender como se conectan las tablas, seguimos la reserva 1 del seed a
 través de la base. Estas filas existen tal cual después de correr los scripts
-(verificable con `SELECT * FROM vw_detalle_reservaciones WHERE reserva_id = 1`).
+(verificable con `SELECT * FROM v_detalle_reservaciones WHERE reserva_id = 1`).
 
 Paso 1, el contexto del negocio (dominio 1):
 
@@ -220,7 +220,7 @@ produce en runtime.
 ```text
 database/scripts/
 ├── 01-create-database.sql   crea citari desde cero
-├── 02-create-tables.sql     15 tablas, PK/FK/UQ + indice filtrado
+├── 02-create-tables.sql     24 tablas, PK/FK/UQ + indice filtrado
 ├── 03-seed-data.sql         seed generado por scripts/gen-seed.py
 ├── 04-procedures.sql        13 stored procedures
 ├── 05-functions.sql         6 funciones escalares
@@ -304,13 +304,13 @@ con sys.sql_expression_dependencies).
 
 | Vista | Tablas | Propósito |
 | --- | --- | --- |
-| vw_detalle_reservaciones | 7 | Reservas con dominio, cliente, servicio, localidad, estado y tracking. |
-| vw_dashboard_dominio | 6 | Resumen de reservas, clientes, servicios y localidades por dominio. |
-| vw_agenda_diaria | 5 | Agenda diaria de reservas por dominio. |
-| vw_estado_disponibilidad | 5 | Bloques disponibles y reservados por sede y fecha. |
-| vw_historial_reservaciones_cliente | 4 | Historial de reservas por cliente. |
-| vw_demanda_servicios | 3 | Total de reservas y última reserva por servicio. |
-| vw_servicios_publicos | 3 | Servicios activos visibles en la página pública. |
+| v_detalle_reservaciones | 7 | Reservas con dominio, cliente, servicio, localidad, estado y tracking. |
+| v_dashboard_dominio | 6 | Resumen de reservas, clientes, servicios y localidades por dominio. |
+| v_agenda_diaria | 5 | Agenda diaria de reservas por dominio. |
+| v_estado_disponibilidad | 5 | Bloques disponibles y reservados por sede y fecha. |
+| v_historial_reservaciones_cliente | 4 | Historial de reservas por cliente. |
+| v_demanda_servicios | 3 | Total de reservas y última reserva por servicio. |
+| v_servicios_publicos | 3 | Servicios activos visibles en la página pública. |
 
 ## Triggers construidos (7)
 
@@ -318,13 +318,13 @@ En `database/scripts/07-triggers.sql`.
 
 | Trigger | Propósito |
 | --- | --- |
-| trg_reservaciones_generar_rastreo | AFTER INSERT: genera el código de tracking (expira a 30 días). Soporta insert multifila. |
-| trg_reservaciones_auditar_insert | AFTER INSERT: registro de auditoría reserva_creada. |
-| trg_reservaciones_auditar_update | AFTER UPDATE: auditoría reserva_actualizada cuando cambia el estado (con valor anterior y nuevo). |
-| trg_dominios_actualizado_en | AFTER UPDATE: refresca actualizado_en (con guard anti-recursion). |
-| trg_servicios_actualizado_en | AFTER UPDATE: refresca actualizado_en. |
-| trg_prevenir_doble_reservacion | Defensa en profundidad: ROLLBACK + THROW 50043 si dos reservas activas apuntan al mismo bloque (el índice filtrado y el bloqueo del SP ya lo previenen; cubre INSERTs directos). |
-| trg_liberar_bloque_al_cancelar | Al pasar a cancelada: reactiva el bloque y pone la FK en NULL (historial en fechas denormalizadas). Al reagendar: reactiva el bloque anterior. |
+| tr_reservaciones_generar_rastreo | AFTER INSERT: genera el código de tracking (expira a 30 días). Soporta insert multifila. |
+| tr_reservaciones_auditar_insert | AFTER INSERT: registro de auditoría reserva_creada. |
+| tr_reservaciones_auditar_update | AFTER UPDATE: auditoría reserva_actualizada cuando cambia el estado (con valor anterior y nuevo). |
+| tr_dominios_actualizado_en | AFTER UPDATE: refresca actualizado_en (con guard anti-recursion). |
+| tr_servicios_actualizado_en | AFTER UPDATE: refresca actualizado_en. |
+| tr_prevenir_doble_reservacion | Defensa en profundidad: ROLLBACK + THROW 50043 si dos reservas activas apuntan al mismo bloque (el índice filtrado y el bloqueo del SP ya lo previenen; cubre INSERTs directos). |
+| tr_liberar_bloque_al_cancelar | Al pasar a cancelada: reactiva el bloque y pone la FK en NULL (historial en fechas denormalizadas). Al reagendar: reactiva el bloque anterior. |
 
 Regla de disenio (anti-doble-efecto): tracking, auditoría y liberación de
 bloques viven ÚNICAMENTE en triggers. Los stored procedures validan, bloquean

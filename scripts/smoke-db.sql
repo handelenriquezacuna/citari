@@ -8,21 +8,21 @@
 -- Casos:
 --    1. sp_crear_reservacion sobre un bloque libre -> reserva creada y
 --       bloque ocupado (activo = 0).
---    2. Trigger trg_reservaciones_generar_rastreo -> existe fila en
+--    2. Trigger tr_reservaciones_generar_rastreo -> existe fila en
 --       codigos_de_rastreos con codigo_rastreo formato 'CITARI-%' para la
 --       reserva del caso 1.
---    3. Trigger trg_reservaciones_auditar_insert -> existe fila en
+--    3. Trigger tr_reservaciones_auditar_insert -> existe fila en
 --       registros con accion='reserva_creada' para la reserva del
 --       caso 1.
 --    4. Segunda sp_crear_reservacion sobre EL MISMO bloque -> rechazada
 --       con THROW en el rango 50040-50059 (bloque ocupado).
 --    5. sp_cancelar_reservacion sobre la reserva del caso 1 -> estado
 --       'cancelada'.
---    6. Trigger trg_liberar_bloque_al_cancelar (rama a) -> el bloque de
+--    6. Trigger tr_liberar_bloque_al_cancelar (rama a) -> el bloque de
 --       la reserva del caso 1 vuelve a activo = 1.
---    7. Trigger trg_liberar_bloque_al_cancelar (rama a) -> la reserva
+--    7. Trigger tr_liberar_bloque_al_cancelar (rama a) -> la reserva
 --       del caso 1 queda con bloque_disponibilidad_id = NULL.
---    8. Trigger trg_reservaciones_auditar_update -> existe fila en
+--    8. Trigger tr_reservaciones_auditar_update -> existe fila en
 --       registros con accion='reserva_actualizada' para la reserva del
 --       caso 1.
 --    9. sp_confirmar_reservacion sobre una reserva nueva (bloque distinto).
@@ -79,8 +79,13 @@ WHERE reserva_id IN (SELECT reserva_id FROM @ids_prueba_previos);
 DELETE FROM bloques_de_disponibilidad
 WHERE fecha_de_bloque IN (N'2031-01-15', N'2031-01-16', N'2031-01-17');
 
-DELETE FROM clientes
-WHERE correo = @correo_prueba;
+DECLARE @ids_cliente_prueba TABLE (cliente_id INT);
+INSERT INTO @ids_cliente_prueba (cliente_id)
+SELECT cc.cliente_id FROM clientes_correos cc WHERE cc.correo = @correo_prueba;
+
+DELETE FROM clientes_correos WHERE cliente_id IN (SELECT cliente_id FROM @ids_cliente_prueba);
+DELETE FROM clientes_telefonos WHERE cliente_id IN (SELECT cliente_id FROM @ids_cliente_prueba);
+DELETE FROM clientes WHERE cliente_id IN (SELECT cliente_id FROM @ids_cliente_prueba);
 
 DECLARE @dominio_id      INT;
 DECLARE @servicio_id     INT;
@@ -171,7 +176,7 @@ ELSE
     PRINT ' [smoke-db] caso 1 (crear reservacion sobre bloque libre) ... FAIL';
 
 -- ------------------------------------------------------------
--- Caso 2 (WP4): trigger trg_reservaciones_generar_rastreo genera un
+-- Caso 2 (WP4): trigger tr_reservaciones_generar_rastreo genera un
 -- codigo de rastreo formato 'CITARI-%' para la reserva del caso 1.
 -- ------------------------------------------------------------
 DECLARE @caso2_ok BIT = 0;
@@ -190,7 +195,7 @@ ELSE
     PRINT ' [smoke-db] caso 2 (trigger genera codigo de rastreo CITARI-%) ... FAIL';
 
 -- ------------------------------------------------------------
--- Caso 3 (WP4): trigger trg_reservaciones_auditar_insert registra la
+-- Caso 3 (WP4): trigger tr_reservaciones_auditar_insert registra la
 -- creacion de la reserva del caso 1 en "registros".
 -- ------------------------------------------------------------
 DECLARE @caso3_ok BIT = 0;
@@ -263,7 +268,7 @@ ELSE
     PRINT ' [smoke-db] caso 5 (cancelar reservacion) ... FAIL';
 
 -- ------------------------------------------------------------
--- Caso 6 (WP4): trigger trg_liberar_bloque_al_cancelar (rama a) libera
+-- Caso 6 (WP4): trigger tr_liberar_bloque_al_cancelar (rama a) libera
 -- el bloque de la reserva del caso 1 (activo = 1).
 -- ------------------------------------------------------------
 DECLARE @caso6_ok BIT = 0;
@@ -280,7 +285,7 @@ ELSE
     PRINT ' [smoke-db] caso 6 (trigger libera el bloque al cancelar) ... FAIL';
 
 -- ------------------------------------------------------------
--- Caso 7 (WP4): trigger trg_liberar_bloque_al_cancelar (rama a) deja
+-- Caso 7 (WP4): trigger tr_liberar_bloque_al_cancelar (rama a) deja
 -- bloque_disponibilidad_id en NULL para la reserva del caso 1.
 -- ------------------------------------------------------------
 DECLARE @caso7_ok BIT = 0;
@@ -297,7 +302,7 @@ ELSE
     PRINT ' [smoke-db] caso 7 (bloque_disponibilidad_id queda NULL tras cancelar) ... FAIL';
 
 -- ------------------------------------------------------------
--- Caso 8 (WP4): trigger trg_reservaciones_auditar_update registra el
+-- Caso 8 (WP4): trigger tr_reservaciones_auditar_update registra el
 -- cambio de estado de la reserva del caso 1 (-> cancelada).
 -- ------------------------------------------------------------
 DECLARE @caso8_ok BIT = 0;
@@ -467,6 +472,8 @@ WHERE nombre_entidad = N'reservaciones'
 
 DELETE FROM reservaciones WHERE reserva_id IN (@reserva_1_id, @reserva_2_id, @reserva_3_id);
 DELETE FROM bloques_de_disponibilidad WHERE bloque_disponibilidad_id IN (@bloque_a_id, @bloque_b_id, @bloque_c_id);
+DELETE FROM clientes_correos WHERE cliente_id = @cliente_prueba_id_1;
+DELETE FROM clientes_telefonos WHERE cliente_id = @cliente_prueba_id_1;
 DELETE FROM clientes WHERE cliente_id = @cliente_prueba_id_1;
 
 PRINT ' [smoke-db] limpieza ... OK (reservaciones, bloques, codigos de rastreo, registros de auditoria y cliente de prueba eliminados)';
