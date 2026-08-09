@@ -70,6 +70,8 @@ def test_409_conflict_envelope_double_booking(
         headers=h,
     ).json()["customerId"]
     cleanup_sql(f"DELETE FROM clientes WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_correos WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_telefonos WHERE cliente_id = {customer_id}")
 
     first = client.post(
         "/bookings",
@@ -108,10 +110,12 @@ def test_422_envelope_shape_differs_from_fastapi_default(client: httpx.Client) -
     "msg":...,"type":...}, ...]} (un array JSON real, ver el schema
     HTTPValidationError del propio openapi.json). Aqui, en cambio, main.py
     intercepta RequestValidationError y lo reescribe como envelope RFC 7807
-    con `detail` = str(exc.errors()) - es decir, la representacion de texto
-    de una lista de dicts de Python (comillas simples, tuplas para `loc`),
-    NO un array JSON. Un cliente que intente `JSON.parse` o iterar
-    `body.detail` como array fallaria."""
+    con `detail` = json.dumps(exc.errors()) - es decir, la lista de errores
+    de pydantic serializada como texto JSON (defecto D3, ya corregido:
+    antes era str(exc.errors()), una representacion Python con comillas
+    simples y no parseable como JSON; ver app/main.py). El `detail` sigue
+    siendo un string (cumple RFC 7807: detail es texto, no un array), pero
+    ahora ese string SI es JSON valido si el cliente decide parsearlo."""
     # /auth/register-owner es publico (sin guarda de auth de por medio),
     # asi que un body incompleto llega directo a la validacion de pydantic.
     r = client.post("/auth/register-owner", json={"businessName": "solo esto"})
@@ -122,16 +126,12 @@ def test_422_envelope_shape_differs_from_fastapi_default(client: httpx.Client) -
     assert body["status"] == 422
     detail = body["detail"]
     assert isinstance(detail, str), "detail deberia ser string (RFC7807), no una lista/array"
-    # El contenido es la representacion de texto de una lista de Python,
-    # no JSON valido: empieza con '[' y usa comillas simples.
-    assert detail.startswith("[{")
-    assert "'loc'" in detail and "'msg'" in detail and "'type'" in detail
-    # Confirma que efectivamente NO es JSON parseable como lista de objetos
-    # (a diferencia del HTTPValidationError nativo de FastAPI).
+    # El contenido es JSON valido: una lista de objetos con loc/msg/type.
     import json as _json
 
-    with pytest.raises(_json.JSONDecodeError):
-        _json.loads(detail)
+    parsed = _json.loads(detail)
+    assert isinstance(parsed, list) and len(parsed) > 0
+    assert {"loc", "msg", "type"} <= set(parsed[0].keys())
 
 
 def test_422_error_detail_is_useful_missing_field_named(client: httpx.Client) -> None:

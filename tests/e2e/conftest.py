@@ -47,9 +47,13 @@ def run_sql(query: str) -> str:
         "docker", "exec", "db",
         "/opt/mssql-tools18/bin/sqlcmd",
         "-S", "localhost", "-U", "sa", "-P", _sqlserver_password(),
-        "-C", "-I", "-d", "citari", "-W", "-h", "-1",
+        "-C", "-I", "-b", "-d", "citari", "-W", "-h", "-1",
         "-Q", f"SET NOCOUNT ON; {query}",
     ]
+    # -b: sin esta bandera, sqlcmd sale con codigo 0 aunque el motor haya
+    # rechazado la sentencia (por ejemplo, una violacion de FK) - el error
+    # queda solo impreso en stdout/stderr, silencioso para quien solo mira
+    # el codigo de salida. Con -b, un error de T-SQL SI produce codigo != 0.
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
     if result.returncode != 0:
         raise RuntimeError(f"sqlcmd fallo: {result.stderr or result.stdout}")
@@ -96,11 +100,22 @@ def bearer(token: str) -> dict[str, str]:
 @pytest.fixture(scope="session")
 def seed_identities() -> dict:
     """Resuelve dinamicamente identidades del seed (emails post-rebrand)."""
-    owner1 = sql_scalar("SELECT correo FROM duenos_de_dominios WHERE dominio_id = 1")
-    owner2 = sql_scalar("SELECT correo FROM duenos_de_dominios WHERE dominio_id = 2")
+    owner1 = sql_scalar(
+        "SELECT TOP 1 correo FROM duenos_de_dominios_correos "
+        "WHERE dueno_id = (SELECT dueno_id FROM duenos_de_dominios WHERE dominio_id = 1) "
+        "ORDER BY dueno_correo_id"
+    )
+    owner2 = sql_scalar(
+        "SELECT TOP 1 correo FROM duenos_de_dominios_correos "
+        "WHERE dueno_id = (SELECT dueno_id FROM duenos_de_dominios WHERE dominio_id = 2) "
+        "ORDER BY dueno_correo_id"
+    )
     slug1 = sql_scalar("SELECT slug FROM dominios WHERE dominio_id = 1")
     slug2 = sql_scalar("SELECT slug FROM dominios WHERE dominio_id = 2")
-    superadmin = sql_scalar("SELECT correo FROM superadmins WHERE superadmin_id = 1")
+    superadmin = sql_scalar(
+        "SELECT TOP 1 correo FROM superadmins_correos "
+        "WHERE superadmin_id = 1 ORDER BY superadmin_correo_id"
+    )
     return {
         "owner1_email": owner1, "owner2_email": owner2,
         "slug1": slug1, "slug2": slug2,

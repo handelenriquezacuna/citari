@@ -117,6 +117,16 @@ def test_admin_tenant_activate_and_suspend_cycle(
     tenant_id = reg["tenantId"]
     cleanup_sql(f"DELETE FROM dominios WHERE dominio_id = {tenant_id}")
     cleanup_sql(f"DELETE FROM duenos_de_dominios WHERE dominio_id = {tenant_id}")
+    cleanup_sql(f"DELETE FROM dominios_correos WHERE dominio_id = {tenant_id}")
+    cleanup_sql(f"DELETE FROM dominios_telefonos WHERE dominio_id = {tenant_id}")
+    cleanup_sql(
+        "DELETE FROM duenos_de_dominios_correos WHERE dueno_id IN "
+        f"(SELECT dueno_id FROM duenos_de_dominios WHERE dominio_id = {tenant_id})"
+    )
+    cleanup_sql(
+        "DELETE FROM duenos_de_dominios_telefonos WHERE dueno_id IN "
+        f"(SELECT dueno_id FROM duenos_de_dominios WHERE dominio_id = {tenant_id})"
+    )
 
     h = bearer(superadmin_token)
     get_resp = client.get(f"/admin/tenants/{tenant_id}", headers=h)
@@ -166,7 +176,11 @@ def test_tenant_current_patch_updates_and_is_restored(
 
     original = client.get("/tenant/current", headers=h).json()
     original_phone = original["phone"]
-    cleanup_sql(f"UPDATE dominios SET telefono = '{original_phone}' WHERE dominio_id = 1")
+    cleanup_sql(
+        f"UPDATE dominios_telefonos SET telefono = '{original_phone}' "
+        "WHERE dominio_telefono_id = (SELECT TOP 1 dominio_telefono_id FROM dominios_telefonos "
+        "WHERE dominio_id = 1 ORDER BY dominio_telefono_id)"
+    )
 
     patch_resp = client.patch("/tenant/current", json={"phone": f"2200-{tag[-4:]}"}, headers=h)
     assert patch_resp.status_code == 200
@@ -184,7 +198,11 @@ def test_tenant_current_patch_null_field_means_no_change(
     cambio (COALESCE-by-omission, ver TenantRepository.update_tenant)."""
     h = bearer(owner1_token)
     original_phone = client.get("/tenant/current", headers=h).json()["phone"]
-    cleanup_sql(f"UPDATE dominios SET telefono = '{original_phone}' WHERE dominio_id = 1")
+    cleanup_sql(
+        f"UPDATE dominios_telefonos SET telefono = '{original_phone}' "
+        "WHERE dominio_telefono_id = (SELECT TOP 1 dominio_telefono_id FROM dominios_telefonos "
+        "WHERE dominio_id = 1 ORDER BY dominio_telefono_id)"
+    )
 
     r = client.patch("/tenant/current", json={"phone": None}, headers=h)
     assert r.status_code == 200

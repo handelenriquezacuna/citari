@@ -35,7 +35,7 @@ from datetime import UTC, datetime
 import httpx
 import pytest
 
-from conftest import OWNER_PASSWORD, bearer
+from conftest import OWNER_PASSWORD, bearer, sql_scalar
 from test_api_helpers import unique_tag
 
 pytestmark = pytest.mark.e2e
@@ -123,7 +123,12 @@ def test_logging_standard_json_fields_and_no_secrets_leak(
     booking = booking_resp.json()
     booking_id = booking["bookingId"]
     tracking_code = booking["trackingCode"]
-    cleanup_sql(f"DELETE FROM clientes WHERE correo = '{customer_email}'")
+    cliente_id = sql_scalar(
+        f"SELECT cliente_id FROM clientes_correos WHERE correo = '{customer_email}'"
+    )
+    cleanup_sql(f"DELETE FROM clientes WHERE cliente_id = {cliente_id}")
+    cleanup_sql(f"DELETE FROM clientes_correos WHERE cliente_id = {cliente_id}")
+    cleanup_sql(f"DELETE FROM clientes_telefonos WHERE cliente_id = {cliente_id}")
     cleanup_sql(f"DELETE FROM reservaciones WHERE reserva_id = {booking_id}")
     cleanup_sql(f"DELETE FROM codigos_de_rastreos WHERE reserva_id = {booking_id}")
     cleanup_sql(

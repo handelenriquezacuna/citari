@@ -147,7 +147,11 @@ def test_carrera_doble_reserva_simultanea_sobre_el_mismo_bloque(
     # mismo bloque), ambas deben limpiarse igual - la limpieza no puede
     # depender de que la asercion de abajo pase.
     for resp, email in ((resp_a, email_a), (resp_b, email_b)):
-        cleanup_sql(f"DELETE FROM clientes WHERE correo = '{email}'")
+        cliente_id = sql_scalar(f"SELECT cliente_id FROM clientes_correos WHERE correo = '{email}'")
+        if cliente_id:
+            cleanup_sql(f"DELETE FROM clientes WHERE cliente_id = {cliente_id}")
+            cleanup_sql(f"DELETE FROM clientes_correos WHERE cliente_id = {cliente_id}")
+            cleanup_sql(f"DELETE FROM clientes_telefonos WHERE cliente_id = {cliente_id}")
         if resp.status_code == 201:
             booking_id = resp.json()["bookingId"]
             cleanup_sql(f"DELETE FROM reservaciones WHERE reserva_id = {booking_id}")
@@ -171,7 +175,7 @@ def test_carrera_doble_reserva_simultanea_sobre_el_mismo_bloque(
     assert winner_body["status"] == "pending"
 
     # Invariante de negocio (mismo que protege el trigger
-    # trg_prevenir_doble_reservacion, 07-triggers.sql #6, THROW 50043):
+    # tr_prevenir_doble_reservacion, 07-triggers.sql #6, THROW 50043):
     # exactamente una reservacion no cancelada apunta a este bloque.
     active_count = sql_scalar(
         f"SELECT COUNT(*) FROM reservaciones WHERE bloque_disponibilidad_id = {block_id} "
