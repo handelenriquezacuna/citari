@@ -78,8 +78,14 @@ def seed_owner(db_factory: ConnectionFactory) -> dict:
         cursor = conn.cursor()
         cursor.execute(
             """
-            SELECT TOP 1 o.dueno_id, o.dominio_id, o.correo, o.nombre
+            SELECT TOP 1 o.dueno_id, o.dominio_id, oco.correo, o.nombre
             FROM duenos_de_dominios o
+            OUTER APPLY (
+                SELECT TOP 1 oc.correo
+                FROM duenos_de_dominios_correos oc
+                WHERE oc.dueno_id = o.dueno_id
+                ORDER BY oc.dueno_correo_id
+            ) oco
             WHERE o.activo = 1 AND dbo.fn_dominio_activo(o.dominio_id) = 1
             ORDER BY o.dueno_id
             """
@@ -105,8 +111,18 @@ def seed_superadmin(db_factory: ConnectionFactory) -> dict:
     try:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT TOP 1 superadmin_id, correo, nombre FROM superadmins "
-            "WHERE activo = 1 ORDER BY superadmin_id"
+            """
+            SELECT TOP 1 s.superadmin_id, sco.correo, s.nombre
+            FROM superadmins s
+            OUTER APPLY (
+                SELECT TOP 1 sc.correo
+                FROM superadmins_correos sc
+                WHERE sc.superadmin_id = s.superadmin_id
+                ORDER BY sc.superadmin_correo_id
+            ) sco
+            WHERE s.activo = 1
+            ORDER BY s.superadmin_id
+            """
         )
         row = cursor.fetchone()
         if row is None:
@@ -242,7 +258,24 @@ def cleanup_tracker(raw_conn) -> Generator[dict, None, None]:
             block_ids,
         )
 
-    cursor.execute("DELETE FROM clientes WHERE correo = ?", [TEST_CUSTOMER_EMAIL])
+    cursor.execute(
+        "SELECT cliente_id FROM clientes_correos WHERE correo = ?", [TEST_CUSTOMER_EMAIL]
+    )
+    test_customer_ids = [row.cliente_id for row in cursor.fetchall()]
+    if test_customer_ids:
+        placeholders = ",".join("?" for _ in test_customer_ids)
+        cursor.execute(
+            f"DELETE FROM clientes_correos WHERE cliente_id IN ({placeholders})",
+            test_customer_ids,
+        )
+        cursor.execute(
+            f"DELETE FROM clientes_telefonos WHERE cliente_id IN ({placeholders})",
+            test_customer_ids,
+        )
+        cursor.execute(
+            f"DELETE FROM clientes WHERE cliente_id IN ({placeholders})",
+            test_customer_ids,
+        )
     raw_conn.commit()
     cursor.close()
 

@@ -60,18 +60,48 @@ class TenantRepository:
         app.mappers.tenant_mapper.map_tenant's conditional `status` field).
         Existing callers (GET /tenant/current, /auth) simply ignore the extra
         column, same conditional-field pattern already used for
-        correo/telefono/logo_url."""
+        correo/telefono/logo_url.
+
+        correo/telefono no longer live on `dominios` (moved to
+        dominios_correos/dominios_telefonos, 1:N) - each is resolved via an
+        OUTER APPLY that takes the first-registered child row (ORDER BY the
+        child table's own identity column ascending) as canonical, aliased
+        back onto the row AS correo/AS telefono, same pattern as
+        database/scripts/06-views.sql."""
         sql = (
-            "SELECT d.*, ed.nombre AS estado_nombre "
+            "SELECT d.*, ed.nombre AS estado_nombre, "
+            "dco.correo AS correo, dte.telefono AS telefono "
             "FROM dominios d "
             "JOIN estados_dominios ed ON ed.dominio_estado_id = d.dominio_estado_id "
+            "OUTER APPLY ("
+            "SELECT TOP 1 dc.correo FROM dominios_correos dc "
+            "WHERE dc.dominio_id = d.dominio_id ORDER BY dc.dominio_correo_id"
+            ") dco "
+            "OUTER APPLY ("
+            "SELECT TOP 1 dt.telefono FROM dominios_telefonos dt "
+            "WHERE dt.dominio_id = d.dominio_id ORDER BY dt.dominio_telefono_id"
+            ") dte "
             "WHERE d.dominio_id = ?"
         )
         rows = query_view(self._conn, sql, [tenant_id], label="dominios+estados_dominios")
         return rows[0] if rows else None
 
     def get_by_slug(self, slug: str) -> dict[str, Any] | None:
-        sql = "SELECT * FROM dominios WHERE slug = ?"
+        """correo/telefono resolved the same OUTER APPLY way as get_by_id -
+        see that method's docstring."""
+        sql = (
+            "SELECT d.*, dco.correo AS correo, dte.telefono AS telefono "
+            "FROM dominios d "
+            "OUTER APPLY ("
+            "SELECT TOP 1 dc.correo FROM dominios_correos dc "
+            "WHERE dc.dominio_id = d.dominio_id ORDER BY dc.dominio_correo_id"
+            ") dco "
+            "OUTER APPLY ("
+            "SELECT TOP 1 dt.telefono FROM dominios_telefonos dt "
+            "WHERE dt.dominio_id = d.dominio_id ORDER BY dt.dominio_telefono_id"
+            ") dte "
+            "WHERE d.slug = ?"
+        )
         rows = query_view(self._conn, sql, [slug], label="dominios")
         return rows[0] if rows else None
 
@@ -111,15 +141,26 @@ class TenantRepository:
 
     def list_tenants(self, *, page: int, page_size: int) -> tuple[list[dict[str, Any]], int]:
         """GET /admin/tenants (WP7b): includes `estado_nombre` per row (same
-        join as get_by_id) and a total count for the pagination envelope."""
+        join as get_by_id) and a total count for the pagination envelope.
+        correo/telefono resolved the same OUTER APPLY way as get_by_id - see
+        that method's docstring."""
         total_rows = query_view(
             self._conn, "SELECT COUNT(*) AS total FROM dominios", [], label="dominios"
         )
         total = int(total_rows[0]["total"]) if total_rows else 0
         sql = (
-            "SELECT d.*, ed.nombre AS estado_nombre "
+            "SELECT d.*, ed.nombre AS estado_nombre, "
+            "dco.correo AS correo, dte.telefono AS telefono "
             "FROM dominios d "
             "JOIN estados_dominios ed ON ed.dominio_estado_id = d.dominio_estado_id "
+            "OUTER APPLY ("
+            "SELECT TOP 1 dc.correo FROM dominios_correos dc "
+            "WHERE dc.dominio_id = d.dominio_id ORDER BY dc.dominio_correo_id"
+            ") dco "
+            "OUTER APPLY ("
+            "SELECT TOP 1 dt.telefono FROM dominios_telefonos dt "
+            "WHERE dt.dominio_id = d.dominio_id ORDER BY dt.dominio_telefono_id"
+            ") dte "
             "ORDER BY d.dominio_id OFFSET ? ROWS FETCH NEXT ? ROWS ONLY"
         )
         rows = query_view(
@@ -172,14 +213,16 @@ class TenantRepository:
         this stays injection-safe despite being built dynamically.
         trg_dominios_actualizado_en keeps `actualizado_en` current on its
         own (docs/sql-signatures.md #4).
+
+        correo/telefono no longer live on `dominios` (moved to
+        dominios_correos/dominios_telefonos, 1:N), so they are no longer
+        part of this UPDATE - each is upserted into its own child table
+        instead (see _upsert_correo/_upsert_telefono below), same
+        None-means-"leave unchanged" contract as every other field here.
         """
         columns: dict[str, Any] = {}
         if name is not None:
             columns["nombre"] = name
-        if email is not None:
-            columns["correo"] = email
-        if phone is not None:
-            columns["telefono"] = phone
         if description is not None:
             columns["descripcion"] = description
         if logo_url is not None:
@@ -203,7 +246,74 @@ class TenantRepository:
             finally:
                 cursor.close()
 
+        if email is not None:
+            self._upsert_correo(tenant_id, email)
+        if phone is not None:
+            self._upsert_telefono(tenant_id, phone)
+
         return self.get_by_id(tenant_id)
+
+    def _upsert_correo(self, tenant_id: int, email: str) -> None:
+        """Updates the canonical (first-registered, lowest
+        dominio_correo_id) row in dominios_correos if one exists, otherwise
+        inserts a new one - mirrors the two-step INSERT pattern
+        sp_crear_dominio uses at creation time (04-procedures.sql)."""
+        cursor = self._conn.cursor()
+        started = time.perf_counter()
+        try:
+            existing = cursor.execute(
+                "SELECT TOP 1 dominio_correo_id FROM dominios_correos "
+                "WHERE dominio_id = ? ORDER BY dominio_correo_id",
+                [tenant_id],
+            ).fetchone()
+            if existing:
+                cursor.execute(
+                    "UPDATE dominios_correos SET correo = ? WHERE dominio_correo_id = ?",
+                    [email, existing[0]],
+                )
+            else:
+                cursor.execute(
+                    "INSERT INTO dominios_correos (dominio_id, correo) VALUES (?, ?)",
+                    [tenant_id, email],
+                )
+            self._conn.commit()
+            _log_write("UPSERT dominios_correos", started, status="ok")
+        except Exception:
+            self._conn.rollback()
+            _log_write("UPSERT dominios_correos", started, status="error")
+            raise
+        finally:
+            cursor.close()
+
+    def _upsert_telefono(self, tenant_id: int, phone: str) -> None:
+        """Same upsert-by-oldest-row logic as _upsert_correo, against
+        dominios_telefonos."""
+        cursor = self._conn.cursor()
+        started = time.perf_counter()
+        try:
+            existing = cursor.execute(
+                "SELECT TOP 1 dominio_telefono_id FROM dominios_telefonos "
+                "WHERE dominio_id = ? ORDER BY dominio_telefono_id",
+                [tenant_id],
+            ).fetchone()
+            if existing:
+                cursor.execute(
+                    "UPDATE dominios_telefonos SET telefono = ? WHERE dominio_telefono_id = ?",
+                    [phone, existing[0]],
+                )
+            else:
+                cursor.execute(
+                    "INSERT INTO dominios_telefonos (dominio_id, telefono) VALUES (?, ?)",
+                    [tenant_id, phone],
+                )
+            self._conn.commit()
+            _log_write("UPSERT dominios_telefonos", started, status="ok")
+        except Exception:
+            self._conn.rollback()
+            _log_write("UPSERT dominios_telefonos", started, status="error")
+            raise
+        finally:
+            cursor.close()
 
 
 def _log_write(label: str, started: float, *, status: str) -> None:

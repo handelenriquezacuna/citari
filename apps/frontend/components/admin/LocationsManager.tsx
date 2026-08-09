@@ -26,18 +26,21 @@ import { errMessage, useResource } from "@/lib/resource";
 type Location = {
   locationId: number;
   name: string;
-  address: string;
+  provincia: string;
+  canton: string;
+  distrito: string;
+  codigoPostal: string;
   phone: string | null;
   isMain: boolean;
   isActive: boolean;
 };
 
 const initialLocations: Location[] = [
-  { locationId: 1, name: "Sede central", address: "San Jose centro", phone: "2222-1010", isMain: true, isActive: true },
-  { locationId: 2, name: "Sucursal oeste", address: "Escazu", phone: "2222-3030", isMain: false, isActive: true }
+  { locationId: 1, name: "Sede central", provincia: "San Jose", canton: "San Jose", distrito: "Carmen", codigoPostal: "10101", phone: "2222-1010", isMain: true, isActive: true },
+  { locationId: 2, name: "Sucursal oeste", provincia: "San Jose", canton: "Escazu", distrito: "Escazu", codigoPostal: "10201", phone: "2222-3030", isMain: false, isActive: true }
 ];
 
-const emptyForm = { name: "", address: "", phone: "", isMain: false, isActive: true };
+const emptyForm = { name: "", provincia: "", canton: "", distrito: "", codigoPostal: "", phone: "", isMain: false, isActive: true };
 type LocationForm = typeof emptyForm;
 
 export function LocationsManager() {
@@ -59,12 +62,21 @@ export function LocationsManager() {
 
   function editLocation(location: Location) {
     setEditingId(location.locationId);
-    setForm({ name: location.name, address: location.address, phone: location.phone ?? "", isMain: location.isMain, isActive: location.isActive });
+    setForm({
+      name: location.name,
+      provincia: location.provincia,
+      canton: location.canton,
+      distrito: location.distrito,
+      codigoPostal: location.codigoPostal,
+      phone: location.phone ?? "",
+      isMain: location.isMain,
+      isActive: location.isActive
+    });
     setIsModalOpen(true);
   }
 
   async function saveLocation() {
-    if (!form.name.trim() || !form.address.trim()) return;
+    if (!form.name.trim() || !form.provincia.trim() || !form.canton.trim() || !form.distrito.trim() || !form.codigoPostal.trim()) return;
     setError(null);
     if (isMockMode()) {
       if (editingId) {
@@ -77,7 +89,15 @@ export function LocationsManager() {
     }
     setBusy(true);
     try {
-      const body = { name: form.name, address: form.address, phone: form.phone || null, isMain: form.isMain };
+      const body = {
+        name: form.name,
+        provincia: form.provincia,
+        canton: form.canton,
+        distrito: form.distrito,
+        codigoPostal: form.codigoPostal,
+        phone: form.phone || null,
+        isMain: form.isMain
+      };
       if (editingId) {
         const updated = await apiPatch<Location>(endpoints.locations.byId(editingId), { ...body, isActive: form.isActive });
         setLocations((current) => current.map((l) => (l.locationId === editingId ? updated : l)));
@@ -139,6 +159,7 @@ export function LocationsManager() {
               <TableRow className="hover:bg-transparent">
                 <TableHead className="pl-6">Nombre</TableHead>
                 <TableHead>Direccion</TableHead>
+                <TableHead>Codigo postal</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="pr-6 text-right">Acciones</TableHead>
@@ -150,6 +171,7 @@ export function LocationsManager() {
                   <TableRow key={i} className="hover:bg-transparent">
                     <TableCell className="pl-6"><Skeleton className="h-4 w-32" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-16 rounded-md" /></TableCell>
                     <TableCell className="pr-6"><Skeleton className="ml-auto h-8 w-8 rounded-md" /></TableCell>
@@ -157,13 +179,14 @@ export function LocationsManager() {
                 ))
               ) : locations.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">Aun no hay sedes. Crea la primera.</TableCell>
+                  <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">Aun no hay sedes. Crea la primera.</TableCell>
                 </TableRow>
               ) : (
                 locations.map((location) => (
                   <TableRow key={location.locationId}>
                     <TableCell className="pl-6 font-medium">{location.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{location.address}</TableCell>
+                    <TableCell className="text-muted-foreground">{`${location.distrito}, ${location.canton}, ${location.provincia}`}</TableCell>
+                    <TableCell className="text-muted-foreground">{location.codigoPostal}</TableCell>
                     <TableCell>
                       {location.isMain ? <Badge variant="brand">Principal</Badge> : <Badge variant="muted">Secundaria</Badge>}
                     </TableCell>
@@ -197,9 +220,25 @@ export function LocationsManager() {
             <Label htmlFor="loc-name">Nombre</Label>
             <Input id="loc-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="loc-addr">Direccion</Label>
-            <Input id="loc-addr" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="loc-provincia">Provincia</Label>
+              <Input id="loc-provincia" value={form.provincia} onChange={(e) => setForm({ ...form, provincia: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="loc-canton">Canton</Label>
+              <Input id="loc-canton" value={form.canton} onChange={(e) => setForm({ ...form, canton: e.target.value })} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="loc-distrito">Distrito</Label>
+              <Input id="loc-distrito" value={form.distrito} onChange={(e) => setForm({ ...form, distrito: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="loc-cp">Codigo postal</Label>
+              <Input id="loc-cp" value={form.codigoPostal} onChange={(e) => setForm({ ...form, codigoPostal: e.target.value })} />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">

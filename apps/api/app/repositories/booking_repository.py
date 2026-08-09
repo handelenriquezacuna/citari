@@ -7,7 +7,7 @@ import pyodbc
 from app.db import exec_sp, exec_sp_output, query_view
 
 # Shared SELECT for the WP7b owner-facing flows (/bookings, /reports/*):
-# aliases vw_detalle_reservaciones' own columns (it already exposes
+# aliases v_detalle_reservaciones' own columns (it already exposes
 # codigo_rastreo via its own LEFT JOIN onto codigos_de_rastreos - see
 # database/scripts/06-views.sql - so no re-join is needed here, unlike
 # _DETAIL_SELECT below) into the same intermediate row shape
@@ -29,11 +29,11 @@ SELECT
     v.nota_cliente                AS nota_cliente,
     v.codigo_rastreo               AS codigo_rastreo,
     v.creado_en                   AS creado_en
-FROM vw_detalle_reservaciones v
+FROM v_detalle_reservaciones v
 """
 
 # Shared SELECT for the WP6 public/track detail flows. Aliases
-# vw_detalle_reservaciones' real column names (reserva_id, cliente_nombre,
+# v_detalle_reservaciones' real column names (reserva_id, cliente_nombre,
 # servicio_nombre, fecha_inicio, fecha_final, ...) into the intermediate row
 # shape app.mappers.booking_mapper.map_booking_detail expects (reservacion_id,
 # nombre_cliente, nombre_servicio, fecha_reservacion, hora_inicio, ...) -
@@ -68,13 +68,13 @@ SELECT
     v.codigo_rastreo                                 AS codigo_rastreo,
     cr.expira_en                                     AS expira_en,
     cr.activo                                        AS codigo_activo
-FROM vw_detalle_reservaciones v
+FROM v_detalle_reservaciones v
 JOIN codigos_de_rastreos cr ON cr.reserva_id = v.reserva_id
 """
 
 
 class BookingRepository:
-    """reservaciones + codigos_de_rastreos (via vw_detalle_reservaciones)."""
+    """reservaciones + codigos_de_rastreos (via v_detalle_reservaciones)."""
 
     def __init__(self, conn: pyodbc.Connection) -> None:
         self._conn = conn
@@ -144,14 +144,12 @@ class BookingRepository:
 
     def get_by_id(self, tenant_id: int, booking_id: int) -> dict[str, Any] | None:
         """WP7b correction: the WP5 stub did `SELECT * FROM
-        vw_detalle_reservaciones ...`, which returns the view's own column
+        v_detalle_reservaciones ...`, which returns the view's own column
         names (reserva_id, cliente_nombre, ...) - not the intermediate keys
         map_booking_detail expects. Uses DETAIL_SELECT_BASE, same as
         list_by_tenant."""
         sql = DETAIL_SELECT_BASE + " WHERE v.dominio_id = ? AND v.reserva_id = ?"
-        rows = query_view(
-            self._conn, sql, [tenant_id, booking_id], label="vw_detalle_reservaciones"
-        )
+        rows = query_view(self._conn, sql, [tenant_id, booking_id], label="v_detalle_reservaciones")
         return rows[0] if rows else None
 
     def list_by_tenant(
@@ -177,8 +175,8 @@ class BookingRepository:
             params.append(booking_date)
         where = " AND ".join(conditions)
 
-        count_sql = f"SELECT COUNT(*) AS total FROM vw_detalle_reservaciones v WHERE {where}"
-        total_rows = query_view(self._conn, count_sql, params, label="vw_detalle_reservaciones")
+        count_sql = f"SELECT COUNT(*) AS total FROM v_detalle_reservaciones v WHERE {where}"
+        total_rows = query_view(self._conn, count_sql, params, label="v_detalle_reservaciones")
         total = int(total_rows[0]["total"]) if total_rows else 0
 
         # reserva_id DESC as tiebreaker: fecha_inicio can repeat, and
@@ -191,7 +189,7 @@ class BookingRepository:
             self._conn,
             sql,
             [*params, (page - 1) * page_size, page_size],
-            label="vw_detalle_reservaciones",
+            label="v_detalle_reservaciones",
         )
         return rows, total
 
@@ -237,19 +235,19 @@ class BookingRepository:
 
     def get_detail_by_id(self, reserva_id: int) -> dict[str, Any] | None:
         sql = _DETAIL_SELECT + " WHERE v.reserva_id = ?"
-        rows = query_view(self._conn, sql, [reserva_id], label="vw_detalle_reservaciones")
+        rows = query_view(self._conn, sql, [reserva_id], label="v_detalle_reservaciones")
         return rows[0] if rows else None
 
     def get_by_tracking_code(self, tracking_code: str) -> dict[str, Any] | None:
         """Correction (WP6): the WP5 stub did `SELECT * FROM
-        vw_detalle_reservaciones WHERE codigo_rastreo = ?`, which returns the
+        v_detalle_reservaciones WHERE codigo_rastreo = ?`, which returns the
         view's real column names (reserva_id, cliente_nombre, ...) - not the
         intermediate keys map_booking_detail expects (reservacion_id,
         nombre_cliente, ...; locked by
         tests/unit/test_mappers.py::test_map_booking_detail). See
         _DETAIL_SELECT's docstring for the full rationale."""
         sql = _DETAIL_SELECT + " WHERE v.codigo_rastreo = ?"
-        rows = query_view(self._conn, sql, [tracking_code], label="vw_detalle_reservaciones")
+        rows = query_view(self._conn, sql, [tracking_code], label="v_detalle_reservaciones")
         return rows[0] if rows else None
 
     def cancel(self, tenant_id: int, booking_id: int) -> None:
@@ -257,7 +255,7 @@ class BookingRepository:
         `@reserva_id`/`@dominio_id` - the WP5 stub sent `reservacion_id`,
         which is not a real parameter name and would fail at the ODBC layer.
         No result set/OUTPUT param on this SP; callers re-fetch the updated
-        detail row afterwards (trg_liberar_bloque_al_cancelar already freed
+        detail row afterwards (tr_liberar_bloque_al_cancelar already freed
         the block and the estado flip is visible by the time this returns)."""
         exec_sp(
             self._conn,

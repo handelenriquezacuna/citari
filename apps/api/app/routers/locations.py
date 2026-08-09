@@ -55,7 +55,10 @@ def create_location(
     location = _service(db).create(
         tenant_id=tenant_id,
         name=payload.name,
-        address=payload.address,
+        provincia=payload.provincia,
+        canton=payload.canton,
+        distrito=payload.distrito,
+        codigo_postal=payload.codigo_postal,
         phone=payload.phone,
         is_main=payload.is_main,
     )
@@ -82,7 +85,10 @@ def update_location(
         tenant_id,
         location_id,
         name=payload.name,
-        address=payload.address,
+        provincia=payload.provincia,
+        canton=payload.canton,
+        distrito=payload.distrito,
+        codigo_postal=payload.codigo_postal,
         phone=payload.phone,
         is_main=payload.is_main,
         is_active=payload.is_active,

@@ -45,8 +45,30 @@ def wp7b_cleanup(raw_conn) -> Generator[None, None, None]:
         "(SELECT localidad_id FROM localidades WHERE nombre LIKE ?)",
         [f"%{WP7B_MARK}%"],
     )
+    cursor.execute(
+        "DELETE FROM localidades_telefonos WHERE localidad_id IN "
+        "(SELECT localidad_id FROM localidades WHERE nombre LIKE ?)",
+        [f"%{WP7B_MARK}%"],
+    )
     cursor.execute("DELETE FROM localidades WHERE nombre LIKE ?", [f"%{WP7B_MARK}%"])
-    cursor.execute("DELETE FROM clientes WHERE correo = ?", [TEST_CUSTOMER_EMAIL])
+    cursor.execute(
+        "SELECT cliente_id FROM clientes_correos WHERE correo = ?", [TEST_CUSTOMER_EMAIL]
+    )
+    test_customer_ids = [row.cliente_id for row in cursor.fetchall()]
+    if test_customer_ids:
+        customer_placeholders = ",".join("?" for _ in test_customer_ids)
+        cursor.execute(
+            f"DELETE FROM clientes_correos WHERE cliente_id IN ({customer_placeholders})",
+            test_customer_ids,
+        )
+        cursor.execute(
+            f"DELETE FROM clientes_telefonos WHERE cliente_id IN ({customer_placeholders})",
+            test_customer_ids,
+        )
+        cursor.execute(
+            f"DELETE FROM clientes WHERE cliente_id IN ({customer_placeholders})",
+            test_customer_ids,
+        )
     raw_conn.commit()
     cursor.close()
 
@@ -197,7 +219,10 @@ def test_location_crud_lifecycle(
         headers=owner_headers,
         json={
             "name": f"Localidad {WP7B_MARK}",
-            "address": "Calle de pruebas 1",
+            "provincia": "San Jose",
+            "canton": "Central",
+            "distrito": "Carmen",
+            "codigoPostal": "10101",
             "phone": "2222-1111",
         },
     )
@@ -211,10 +236,10 @@ def test_location_crud_lifecycle(
     updated = client.patch(
         f"/api/v1/locations/{location_id}",
         headers=owner_headers,
-        json={"address": "Calle nueva 2", "isMain": True},
+        json={"distrito": "Zapote", "isMain": True},
     )
     assert updated.status_code == 200
-    assert updated.json()["address"] == "Calle nueva 2"
+    assert updated.json()["distrito"] == "Zapote"
     assert updated.json()["isMain"] is True
 
     deleted = client.delete(f"/api/v1/locations/{location_id}", headers=owner_headers)
@@ -236,7 +261,13 @@ def temp_location(client: TestClient, owner_headers: dict) -> dict:
     response = client.post(
         "/api/v1/locations",
         headers=owner_headers,
-        json={"name": f"Localidad horarios {WP7B_MARK}", "address": "Calle horarios 3"},
+        json={
+            "name": f"Localidad horarios {WP7B_MARK}",
+            "provincia": "San Jose",
+            "canton": "Central",
+            "distrito": "Carmen",
+            "codigoPostal": "10101",
+        },
     )
     assert response.status_code == 201
     return response.json()

@@ -59,8 +59,14 @@ def seed_owner_module(db_factory) -> dict:
         cursor = conn.cursor()
         cursor.execute(
             """
-            SELECT TOP 1 o.dueno_id, o.dominio_id, o.correo
+            SELECT TOP 1 o.dueno_id, o.dominio_id, oco.correo
             FROM duenos_de_dominios o
+            OUTER APPLY (
+                SELECT TOP 1 oc.correo
+                FROM duenos_de_dominios_correos oc
+                WHERE oc.dueno_id = o.dueno_id
+                ORDER BY oc.dueno_correo_id
+            ) oco
             WHERE o.activo = 1 AND dbo.fn_dominio_activo(o.dominio_id) = 1
             ORDER BY o.dueno_id
             """

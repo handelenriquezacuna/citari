@@ -11,6 +11,17 @@ added when the key is present) so the WP6 shape - and
 tests/unit/test_mappers.py::test_map_tenant, which asserts exact dict
 equality on a row without those keys - keeps passing unmodified.
 
+Schema-migration note: correo/telefono no longer live on `dominios` itself
+(moved to dominios_correos/dominios_telefonos, 1:N); the repository queries
+that need them now resolve them via an OUTER APPLY and alias the result back
+onto the row AS correo/AS telefono (see
+app.repositories.tenant_repository.get_by_id/get_by_slug/list_tenants), so
+the "is the key present on this row" check below still means exactly what it
+always did - whether *this* query bothered to select the column, not
+whether the row was fully hydrated. get_active_by_slug (the WP6 public path)
+deliberately still doesn't select them at all, so this stays conditional
+rather than becoming an unconditional `row["correo"]`.
+
 WP7b addition: GET /admin/tenants and GET /admin/tenants/{id} join
 estados_dominios and pass through `estado_nombre` (see
 app.repositories.tenant_repository.get_by_id/list_tenants) - surfaced here as
