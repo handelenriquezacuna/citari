@@ -191,9 +191,9 @@ flujo de "admin crea un dominio sin owner".
 
 | Método | Path | Auth | Propósito | SP / vista |
 | --- | --- | --- | --- | --- |
-| GET | `/availability-blocks` | owner | Lista bloques del dominio | `vw_estado_disponibilidad` |
+| GET | `/availability-blocks` | owner | Lista bloques del dominio | `v_estado_disponibilidad` |
 | POST | `/availability-blocks` | owner | Crea un bloque de disponibilidad | `sp_crear_bloque_disponibilidad` |
-| GET | `/availability-blocks/{availability_block_id}` | owner | Detalle de un bloque | `vw_estado_disponibilidad` |
+| GET | `/availability-blocks/{availability_block_id}` | owner | Detalle de un bloque | `v_estado_disponibilidad` |
 | DELETE | `/availability-blocks/{availability_block_id}` | owner | Desactiva el bloque (`activo = 0`) | SQL directo (UPDATE) |
 
 ### Clientes (`/customers`, owner)
@@ -204,15 +204,15 @@ flujo de "admin crea un dominio sin owner".
 | POST | `/customers` | owner | Crea cliente (o reutiliza uno existente por dominio+correo) | `sp_crear_cliente` |
 | GET | `/customers/{customer_id}` | owner | Detalle de cliente | SELECT `clientes` |
 | PATCH | `/customers/{customer_id}` | owner | Actualiza datos de contacto | SQL directo (UPDATE) |
-| GET | `/customers/{customer_id}/bookings` | owner | Historial de reservas del cliente | `vw_historial_reservaciones_cliente` |
+| GET | `/customers/{customer_id}/bookings` | owner | Historial de reservas del cliente | `v_historial_reservaciones_cliente` |
 
 ### Reservaciones (`/bookings`, owner: panel interno del negocio)
 
 | Método | Path | Auth | Propósito | SP / vista |
 | --- | --- | --- | --- | --- |
-| GET | `/bookings` | owner | Lista reservas del dominio (filtros, paginado) | `vw_detalle_reservaciones` |
+| GET | `/bookings` | owner | Lista reservas del dominio (filtros, paginado) | `v_detalle_reservaciones` |
 | POST | `/bookings` | owner | Crea una reserva (cliente existente o datos de contacto nuevos) | `sp_crear_reservacion` |
-| GET | `/bookings/{booking_id}` | owner | Detalle de una reserva | `vw_detalle_reservaciones` |
+| GET | `/bookings/{booking_id}` | owner | Detalle de una reserva | `v_detalle_reservaciones` |
 | POST | `/bookings/{booking_id}/confirm` | owner | Confirma una reserva pendiente | `sp_confirmar_reservacion` |
 | POST | `/bookings/{booking_id}/cancel` | owner | Cancela una reserva | `sp_cancelar_reservacion` |
 | POST | `/bookings/{booking_id}/complete` | owner | Marca una reserva como completada | `sp_completar_reservacion` |
@@ -222,11 +222,11 @@ flujo de "admin crea un dominio sin owner".
 
 | Método | Path | Auth | Propósito | SP / vista |
 | --- | --- | --- | --- | --- |
-| GET | `/reports/dashboard` | owner | Métricas resumen del dominio (totales, pendientes, confirmadas, ...) | `vw_dashboard_dominio` |
-| GET | `/reports/daily-agenda` | owner | Agenda de un día específico | `vw_agenda_diaria` |
-| GET | `/reports/bookings-detail` | owner | Detalle de reservas paginado, con filtros de reporte | `vw_detalle_reservaciones` |
-| GET | `/reports/services-demand` | owner | Demanda (total de reservas) por servicio | `vw_demanda_servicios` |
-| GET | `/reports/availability-status` | owner | Estado de los bloques de un día (libres/ocupados) | `vw_estado_disponibilidad` |
+| GET | `/reports/dashboard` | owner | Métricas resumen del dominio (totales, pendientes, confirmadas, ...) | `v_dashboard_dominio` |
+| GET | `/reports/daily-agenda` | owner | Agenda de un día específico | `v_agenda_diaria` |
+| GET | `/reports/bookings-detail` | owner | Detalle de reservas paginado, con filtros de reporte | `v_detalle_reservaciones` |
+| GET | `/reports/services-demand` | owner | Demanda (total de reservas) por servicio | `v_demanda_servicios` |
+| GET | `/reports/availability-status` | owner | Estado de los bloques de un día (libres/ocupados) | `v_estado_disponibilidad` |
 
 ### Auditoría (`/audit-logs`, superadmin)
 
@@ -239,15 +239,15 @@ flujo de "admin crea un dominio sin owner".
 | Método | Path | Auth | Propósito | SP / vista |
 | --- | --- | --- | --- | --- |
 | GET | `/public/{slug}` | público | Datos del dominio activo por slug (404 si no existe o no está activo) | SELECT `dominios` |
-| GET | `/public/{slug}/services` | público | Servicios activos y publicables de ese dominio | `vw_servicios_publicos` |
-| GET | `/public/{slug}/availability` | público | Bloques disponibles (activos, no reservados); filtros opcionales `date`/`locationId` | `vw_estado_disponibilidad` |
+| GET | `/public/{slug}/services` | público | Servicios activos y publicables de ese dominio | `v_servicios_publicos` |
+| GET | `/public/{slug}/availability` | público | Bloques disponibles (activos, no reservados); filtros opcionales `date`/`locationId` | `v_estado_disponibilidad` |
 | POST | `/public/{slug}/bookings` | público | Crea una reserva desde el flujo público (siempre con datos de cliente nuevos) | `sp_crear_reservacion` (rama sin `clienteId`, delega en `sp_crear_cliente`) |
 
 ### Seguimiento (`/track/{code}`, público vía código de rastreo)
 
 | Método | Path | Auth | Propósito | SP / vista |
 | --- | --- | --- | --- | --- |
-| GET | `/track/{code}` | público | Consulta una reserva por su código de rastreo | `vw_detalle_reservaciones` |
+| GET | `/track/{code}` | público | Consulta una reserva por su código de rastreo | `v_detalle_reservaciones` |
 | POST | `/track/{code}/cancel` | público | Cancela la reserva asociada a ese código | `sp_cancelar_reservacion` |
 | POST | `/track/{code}/reschedule` | público | Reagenda la reserva a otro bloque de disponibilidad | `sp_reagendar_reservacion` |
 

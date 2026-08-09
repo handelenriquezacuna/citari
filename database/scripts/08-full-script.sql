@@ -1,29 +1,22 @@
-﻿﻿-- ============================================================
+﻿-- ============================================================
 -- 08-full-script.sql
--- Proyecto: Citari - Citari
--- Contenido: script unico y equivalente a correr, en orden y sobre
--- un servidor limpio, 01-create-database.sql + 02-create-tables.sql
--- + 03-seed-data.sql + 04-procedures.sql + 05-functions.sql +
--- 06-views.sql + 07-triggers.sql. Generado por concatenacion; no
--- editar secciones individuales aqui, editar el archivo fuente
--- correspondiente en database/scripts/ y regenerar este archivo.
--- Identificadores en espanol, ASCII. Ver docs/rename-map.csv para
--- la equivalencia con los nombres en ingles y docs/sql-signatures.md
--- para la referencia compacta de firmas (SP/vistas/funciones/THROW).
+-- Proyecto: Citari
+-- Contenido: script unico que reconstruye la base de datos completa
+-- desde cero, en orden: creacion de la base, las 24 tablas y sus
+-- relaciones, los datos de prueba (50 registros por tabla), los
+-- procedimientos almacenados, las funciones, las vistas y los
+-- triggers. Identificadores en espanol, ASCII.
 -- ============================================================
 
 -- ============================================================
 -- SECCION 01. CREACION DE LA BASE DE DATOS
--- Fuente: database/scripts/01-create-database.sql
 -- ============================================================
 
 -- ============================================================
 -- 01-create-database.sql
--- Proyecto: Citari - Citari
+-- Proyecto: Citari
 -- Contenido: crea la base de datos citari desde cero.
--- Nota: el schema usa identificadores en espanol (ASCII puro);
---       ver docs/rename-map.csv para la equivalencia con los
---       nombres originales en ingles y el modelo MR con enie.
+-- Los identificadores del esquema estan en espanol (ASCII puro).
 -- ============================================================
 
 USE master;
@@ -47,19 +40,17 @@ GO
 
 -- ============================================================
 -- SECCION 02. CREACION DE TABLAS Y RELACIONES
--- Fuente: database/scripts/02-create-tables.sql
 -- ============================================================
 
 -- ============================================================
 -- 02-create-tables.sql
--- Proyecto: Citari - Citari
+-- Proyecto: Citari
 -- Contenido: crea las 24 tablas y relaciones (identificadores en espanol, ASCII)
--- Modelo alineado al Avance #2 (normalizacion a 3FN): correo y telefono son
--- atributos multivaluados y viven en tablas propias por cada entidad
--- (superadmins, dominios, duenos_de_dominios, clientes, localidades); la
--- division territorial de una localidad (provincia/canton/distrito/codigo
--- postal) vive en el catalogo reutilizable direcciones.
--- Ver docs/rename-map.csv para la equivalencia con los nombres en ingles.
+-- Normalizado a la 3FN: correo y telefono son atributos multivaluados y
+-- viven en tablas propias por cada entidad (superadmins, dominios,
+-- duenos_de_dominios, clientes, localidades); la division territorial de
+-- una localidad (provincia/canton/distrito/codigo postal) vive en el
+-- catalogo reutilizable direcciones.
 -- ============================================================
 
 USE citari;
@@ -376,18 +367,14 @@ GO
 
 -- ============================================================
 -- SECCION 03. DATOS DE PRUEBA (SEED)
--- Fuente: database/scripts/03-seed-data.sql
 -- ============================================================
 
 -- ============================================================
 -- 03-seed-data.sql
--- Proyecto: Citari - Citari
+-- Proyecto: Citari
 -- Contenido: datos de prueba (50 registros por tabla, 24 tablas)
--- GENERADO por scripts/gen-seed.py -- NO editar a mano.
---   Regenerar:  python3 scripts/gen-seed.py
---   Verificar:  python3 scripts/gen-seed.py --check
--- Requiere base recien creada (01 y 02): los IDs IDENTITY
--- inician en 1 y las FKs se emiten como literales 1..50.
+-- Requiere una base de datos recien creada: los IDs IDENTITY
+-- inician en 1 y las llaves foraneas se emiten como literales 1..50.
 -- ============================================================
 
 USE citari;
@@ -1697,16 +1684,14 @@ GO
 
 -- ============================================================
 -- SECCION 04. PROCEDIMIENTOS ALMACENADOS
--- Fuente: database/scripts/04-procedures.sql
 -- ============================================================
 
 -- ============================================================
 -- 04-procedures.sql
--- Proyecto: Citari - Citari
--- Contenido: 13 stored procedures de dominios, servicios, disponibilidad,
--- clientes y reservaciones (identificadores en espanol, ASCII).
--- Idempotente: CREATE OR ALTER PROCEDURE.
--- Ver docs/rename-map.csv para nombres de tablas/columnas.
+-- Proyecto: Citari
+-- Contenido: 13 procedimientos almacenados de dominios, servicios,
+-- disponibilidad, clientes y reservaciones (identificadores en
+-- espanol, ASCII). Idempotente: CREATE OR ALTER PROCEDURE.
 --
 -- Convencion de errores (THROW):
 --   50001-50019  validacion / regla de negocio        (400)
@@ -2368,15 +2353,13 @@ GO
 
 -- ============================================================
 -- SECCION 05. FUNCIONES
--- Fuente: database/scripts/05-functions.sql
 -- ============================================================
 
 -- ============================================================
 -- 05-functions.sql
--- Proyecto: Citari - Citari
+-- Proyecto: Citari
 -- Contenido: 6 funciones escalares de utilidad sobre el esquema en espanol.
 -- Idempotente: usa CREATE OR ALTER, se puede reejecutar sin error.
--- Ver docs/rename-map.csv para la equivalencia con los nombres en ingles.
 -- ============================================================
 
 USE citari;
@@ -2524,16 +2507,14 @@ GO
 
 -- ============================================================
 -- SECCION 06. VISTAS
--- Fuente: database/scripts/06-views.sql
 -- ============================================================
 
 -- ============================================================
 -- 06-views.sql
--- Proyecto: Citari - Citari
+-- Proyecto: Citari
 -- Contenido: 7 vistas de lectura sobre el esquema en espanol.
 -- Idempotente: usa CREATE OR ALTER, se puede reejecutar sin error.
--- R6: toda vista referencia como minimo 2 tablas base.
--- Ver docs/rename-map.csv para la equivalencia con los nombres en ingles.
+-- Toda vista referencia como minimo 2 tablas base.
 -- ============================================================
 
 USE citari;
@@ -2757,26 +2738,22 @@ GO
 
 -- ============================================================
 -- SECCION 07. TRIGGERS
--- Fuente: database/scripts/07-triggers.sql
 -- ============================================================
 
 -- ============================================================
 -- 07-triggers.sql
--- Proyecto: Citari - Citari
+-- Proyecto: Citari
 -- Contenido: 7 triggers sobre reservaciones, dominios y servicios
 -- (identificadores en espanol, ASCII). Idempotente: CREATE OR ALTER
 -- TRIGGER, se puede reejecutar sin error.
--- Ver docs/rename-map.csv para nombres de tablas/columnas y
--- docs/sql-signatures.md para la referencia compacta de firmas.
 --
--- THROW propio de este archivo (dentro del rango de conflicto/409 ya
--- declarado en 04-procedures.sql, 50040-50059):
+-- THROW propio de este archivo (dentro del rango de conflicto/409:
+-- 50040-50059):
 --   50043  Conflicto: mas de una reservacion no cancelada apunta al
 --          mismo bloque de disponibilidad. Defensa en profundidad:
---          el indice unico filtrado ux_reservaciones_bloque
---          (02-create-tables.sql) y el UPDLOCK/HOLDLOCK de
---          sp_crear_reservacion/sp_reagendar_reservacion
---          (04-procedures.sql) ya deberian haberlo evitado; este
+--          el indice unico filtrado ux_reservaciones_bloque y el
+--          UPDLOCK/HOLDLOCK de sp_crear_reservacion/
+--          sp_reagendar_reservacion ya deberian haberlo evitado; este
 --          trigger solo protege contra INSERT/UPDATE directos que
 --          se salten esos procedimientos.
 --

@@ -23,11 +23,14 @@ corresponde al subgrupo y KN al horario del curso.
 La Entrega final y Defensa requiere: al menos 5 funciones, al menos 5 triggers, y un
 archivo con todos los scripts de la base para generar tablas, relaciones, procedimientos
 y la totalidad de estructuras. La entrega actual cumple estos requisitos con margen (6
-funciones, 7 triggers, `08-full-script.sql`). El script de demostración para la defensa es
+funciones, 7 triggers, `08-full-script.sql`). El guion de demostración para la defensa es
 [database/scripts/09-defensa.sql](../database/scripts/09-defensa.sql): no crea ni altera
-estructuras, solo consulta y ejercita la base ya construida (vision general de la base
-completa y luego una historia tecnica encadenada: reservar, auditar, consultar detalle,
-cancelar, liberar).
+estructuras (todas sus sentencias son `CREATE OR ALTER`, re-ejecutables sin efecto
+secundario). Sigue el mismo orden del enunciado del curso (procedimientos, vistas,
+funciones, triggers) y tiene tres partes: visión general de la base completa, el código
+de los 2 objetos más elaborados de cada categoría con su explicación, y una demostración
+en vivo (reservar, consultar detalle, reagendar y comprobar que el sistema rechaza una
+doble reserva).
 
 > Nota de alineación (2026-08-08): la base de datos se actualizó de 15 a 24 tablas para
 > quedar alineada con la normalización a 3FN presentada en el Avance #2 (correo y
@@ -35,9 +38,9 @@ cancelar, liberar).
 > `direcciones` para la división territorial de cada localidad). El detalle de las 9
 > tablas nuevas está en [database/diagrams/MODELO-RELACIONAL.md](../database/diagrams/MODELO-RELACIONAL.md).
 > Los prefijos de triggers y vistas también se alinearon a la convención del profesor
-> (`tr_`/`v_` en vez de `trg_`/`vw_`). `apps/api` (fuera del alcance de la rúbrica del
-> curso) aún asume el esquema y los nombres anteriores, y requiere una actualización
-> aparte antes de volver a usarse end-to-end.
+> (`tr_`/`v_` en vez de `trg_`/`vw_`). `apps/api` y `apps/frontend` (fuera del alcance de
+> la rúbrica del curso, que evalúa únicamente la base de datos) también se actualizaron
+> al esquema de 24 tablas y quedaron verificados funcionando end-to-end.
 
 ## Matriz de requisitos y evidencia
 
@@ -47,7 +50,7 @@ cancelar, liberar).
 | 2 | Requerimientos definidos | N/A | Cumple | [docs/overview.md](../docs/overview.md), [docs/domain-questions.md](../docs/domain-questions.md) |
 | 3 | Diagrama Entidad-Relación | N/A | Cumple | [infra/MultiTenantBookingManager.drawio](../infra/MultiTenantBookingManager.drawio) |
 | 4 | Diagrama Relacional | N/A | Cumple | [database/diagrams/MODELO-RELACIONAL.md](../database/diagrams/MODELO-RELACIONAL.md) |
-| 5 | Normalización a la 3FN | 3FN | Cumple | [database/diagrams/CITARI-Normalizacion.xlsx](../database/diagrams/CITARI-Normalizacion.xlsx), [docs/database-and-sql.md](../docs/database-and-sql.md) |
+| 5 | Normalización a la 3FN | 3FN | Cumple | [database/diagrams/NormalizacionProyecto.xlsx](../database/diagrams/NormalizacionProyecto.xlsx), [docs/database-and-sql.md](../docs/database-and-sql.md) |
 | 6 | Creación de la base mediante DDL | N/A | Cumple | [database/scripts/01-create-database.sql](../database/scripts/01-create-database.sql) |
 | 7 | Tablas | ≥ 10 | 24 | [database/scripts/02-create-tables.sql](../database/scripts/02-create-tables.sql) |
 | 8 | Registros por tabla | ≥ 50 | 50 por tabla | [database/scripts/03-seed-data.sql](../database/scripts/03-seed-data.sql); generador: [scripts/gen-seed.py](../scripts/gen-seed.py) |

@@ -1,10 +1,9 @@
 ﻿-- ============================================================
 -- 06-views.sql
--- Proyecto: Citari - Citari
+-- Proyecto: Citari
 -- Contenido: 7 vistas de lectura sobre el esquema en espanol.
 -- Idempotente: usa CREATE OR ALTER, se puede reejecutar sin error.
--- R6: toda vista referencia como minimo 2 tablas base.
--- Ver docs/rename-map.csv para la equivalencia con los nombres en ingles.
+-- Toda vista referencia como minimo 2 tablas base.
 -- ============================================================
 
 USE citari;

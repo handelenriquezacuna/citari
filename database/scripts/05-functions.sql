@@ -1,9 +1,8 @@
 ﻿-- ============================================================
 -- 05-functions.sql
--- Proyecto: Citari - Citari
+-- Proyecto: Citari
 -- Contenido: 6 funciones escalares de utilidad sobre el esquema en espanol.
 -- Idempotente: usa CREATE OR ALTER, se puede reejecutar sin error.
--- Ver docs/rename-map.csv para la equivalencia con los nombres en ingles.
 -- ============================================================
 
 USE citari;

@@ -22,18 +22,14 @@ SOURCES = [
     ("07", "TRIGGERS", "07-triggers.sql"),
 ]
 
-HEADER = """﻿-- ============================================================
+HEADER = """-- ============================================================
 -- 08-full-script.sql
--- Proyecto: Citari - Citari
--- Contenido: script unico y equivalente a correr, en orden y sobre
--- un servidor limpio, 01-create-database.sql + 02-create-tables.sql
--- + 03-seed-data.sql + 04-procedures.sql + 05-functions.sql +
--- 06-views.sql + 07-triggers.sql. Generado por concatenacion; no
--- editar secciones individuales aqui, editar el archivo fuente
--- correspondiente en database/scripts/ y regenerar este archivo.
--- Identificadores en espanol, ASCII. Ver docs/rename-map.csv para
--- la equivalencia con los nombres en ingles y docs/sql-signatures.md
--- para la referencia compacta de firmas (SP/vistas/funciones/THROW).
+-- Proyecto: Citari
+-- Contenido: script unico que reconstruye la base de datos completa
+-- desde cero, en orden: creacion de la base, las 24 tablas y sus
+-- relaciones, los datos de prueba (50 registros por tabla), los
+-- procedimientos almacenados, las funciones, las vistas y los
+-- triggers. Identificadores en espanol, ASCII.
 -- ============================================================
 """
 
@@ -45,7 +41,6 @@ def main():
         parts.append(
             f"\n-- ============================================================\n"
             f"-- SECCION {num}. {title}\n"
-            f"-- Fuente: database/scripts/{filename}\n"
             f"-- ============================================================\n\n"
             f"{src.rstrip()}\n"
         )

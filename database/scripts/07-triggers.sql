@@ -1,20 +1,17 @@
 ﻿-- ============================================================
 -- 07-triggers.sql
--- Proyecto: Citari - Citari
+-- Proyecto: Citari
 -- Contenido: 7 triggers sobre reservaciones, dominios y servicios
 -- (identificadores en espanol, ASCII). Idempotente: CREATE OR ALTER
 -- TRIGGER, se puede reejecutar sin error.
--- Ver docs/rename-map.csv para nombres de tablas/columnas y
--- docs/sql-signatures.md para la referencia compacta de firmas.
 --
--- THROW propio de este archivo (dentro del rango de conflicto/409 ya
--- declarado en 04-procedures.sql, 50040-50059):
+-- THROW propio de este archivo (dentro del rango de conflicto/409:
+-- 50040-50059):
 --   50043  Conflicto: mas de una reservacion no cancelada apunta al
 --          mismo bloque de disponibilidad. Defensa en profundidad:
---          el indice unico filtrado ux_reservaciones_bloque
---          (02-create-tables.sql) y el UPDLOCK/HOLDLOCK de
---          sp_crear_reservacion/sp_reagendar_reservacion
---          (04-procedures.sql) ya deberian haberlo evitado; este
+--          el indice unico filtrado ux_reservaciones_bloque y el
+--          UPDLOCK/HOLDLOCK de sp_crear_reservacion/
+--          sp_reagendar_reservacion ya deberian haberlo evitado; este
 --          trigger solo protege contra INSERT/UPDATE directos que
 --          se salten esos procedimientos.
 --

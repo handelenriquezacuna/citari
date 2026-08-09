@@ -1,12 +1,9 @@
 ﻿-- ============================================================
 -- 03-seed-data.sql
--- Proyecto: Citari - Citari
+-- Proyecto: Citari
 -- Contenido: datos de prueba (50 registros por tabla, 24 tablas)
--- GENERADO por scripts/gen-seed.py -- NO editar a mano.
---   Regenerar:  python3 scripts/gen-seed.py
---   Verificar:  python3 scripts/gen-seed.py --check
--- Requiere base recien creada (01 y 02): los IDs IDENTITY
--- inician en 1 y las FKs se emiten como literales 1..50.
+-- Requiere una base de datos recien creada: los IDs IDENTITY
+-- inician en 1 y las llaves foraneas se emiten como literales 1..50.
 -- ============================================================
 
 USE citari;

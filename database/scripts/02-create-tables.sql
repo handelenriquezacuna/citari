@@ -1,13 +1,12 @@
 -- ============================================================
 -- 02-create-tables.sql
--- Proyecto: Citari - Citari
+-- Proyecto: Citari
 -- Contenido: crea las 24 tablas y relaciones (identificadores en espanol, ASCII)
--- Modelo alineado al Avance #2 (normalizacion a 3FN): correo y telefono son
--- atributos multivaluados y viven en tablas propias por cada entidad
--- (superadmins, dominios, duenos_de_dominios, clientes, localidades); la
--- division territorial de una localidad (provincia/canton/distrito/codigo
--- postal) vive en el catalogo reutilizable direcciones.
--- Ver docs/rename-map.csv para la equivalencia con los nombres en ingles.
+-- Normalizado a la 3FN: correo y telefono son atributos multivaluados y
+-- viven en tablas propias por cada entidad (superadmins, dominios,
+-- duenos_de_dominios, clientes, localidades); la division territorial de
+-- una localidad (provincia/canton/distrito/codigo postal) vive en el
+-- catalogo reutilizable direcciones.
 -- ============================================================
 
 USE citari;

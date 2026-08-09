@@ -1,10 +1,9 @@
 ﻿-- ============================================================
 -- 04-procedures.sql
--- Proyecto: Citari - Citari
--- Contenido: 13 stored procedures de dominios, servicios, disponibilidad,
--- clientes y reservaciones (identificadores en espanol, ASCII).
--- Idempotente: CREATE OR ALTER PROCEDURE.
--- Ver docs/rename-map.csv para nombres de tablas/columnas.
+-- Proyecto: Citari
+-- Contenido: 13 procedimientos almacenados de dominios, servicios,
+-- disponibilidad, clientes y reservaciones (identificadores en
+-- espanol, ASCII). Idempotente: CREATE OR ALTER PROCEDURE.
 --
 -- Convencion de errores (THROW):
 --   50001-50019  validacion / regla de negocio        (400)
