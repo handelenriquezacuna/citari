@@ -232,7 +232,10 @@ def test_public_book_track_cancel_frees_block_for_rebooking(
     assert booking["status"] == "pending"
     tracking_code = booking["trackingCode"]
     first_booking_id = booking["bookingId"]
-    cleanup_sql(f"DELETE FROM clientes WHERE correo = '{email}'")
+    cliente_id = sql_scalar(f"SELECT cliente_id FROM clientes_correos WHERE correo = '{email}'")
+    cleanup_sql(f"DELETE FROM clientes WHERE cliente_id = {cliente_id}")
+    cleanup_sql(f"DELETE FROM clientes_correos WHERE cliente_id = {cliente_id}")
+    cleanup_sql(f"DELETE FROM clientes_telefonos WHERE cliente_id = {cliente_id}")
     cleanup_sql(f"DELETE FROM reservaciones WHERE reserva_id = {first_booking_id}")
     cleanup_sql(f"DELETE FROM codigos_de_rastreos WHERE reserva_id = {first_booking_id}")
     cleanup_sql(
@@ -256,7 +259,7 @@ def test_public_book_track_cancel_frees_block_for_rebooking(
     assert cancel_resp.json()["status"] == "cancelled"
 
     # 7. El bloque vuelve a estar libre en disponibilidad publica (trigger
-    # trg_liberar_bloque_al_cancelar, rama a).
+    # tr_liberar_bloque_al_cancelar, rama a).
     avail_after_cancel = client.get(f"/public/{slug}/availability", params={"date": "2027-01-15"})
     assert block_id in [b["availabilityBlockId"] for b in avail_after_cancel.json()]
     assert sql_scalar(
@@ -327,7 +330,10 @@ def test_track_reschedule_moves_booking_and_frees_old_block(
     ).json()
     booking_id = booking["bookingId"]
     tracking_code = booking["trackingCode"]
-    cleanup_sql(f"DELETE FROM clientes WHERE correo = '{email}'")
+    cliente_id = sql_scalar(f"SELECT cliente_id FROM clientes_correos WHERE correo = '{email}'")
+    cleanup_sql(f"DELETE FROM clientes WHERE cliente_id = {cliente_id}")
+    cleanup_sql(f"DELETE FROM clientes_correos WHERE cliente_id = {cliente_id}")
+    cleanup_sql(f"DELETE FROM clientes_telefonos WHERE cliente_id = {cliente_id}")
     cleanup_sql(f"DELETE FROM reservaciones WHERE reserva_id = {booking_id}")
     cleanup_sql(f"DELETE FROM codigos_de_rastreos WHERE reserva_id = {booking_id}")
     cleanup_sql(

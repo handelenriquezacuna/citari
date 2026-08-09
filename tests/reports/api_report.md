@@ -62,7 +62,7 @@ negocio de este agente).
 | GET/POST/PATCH/DELETE /services | crear->leer->actualizar, 422 (2 casos), categoria inexistente (404), 401, paginacion + filtro categoryId, aislamiento (get/patch/delete cruzado + filtro categoryId ajeno + listado), soft delete (sin isActive expuesto) | PASS | test_api_catalog_crud.py::test_service_*, test_api_tenant_isolation.py::test_service_*, test_api_soft_delete.py::test_service_soft_delete_full_behavior |
 | GET/POST/PATCH/DELETE /locations | crear->leer->actualizar, 422 (2 casos), 401, paginacion, aislamiento (get/patch/delete cruzado + listado), soft delete completo | PASS | test_api_catalog_crud.py::test_location_*, test_api_tenant_isolation.py::test_location_*, test_api_soft_delete.py::test_location_soft_delete_full_behavior |
 | GET/PUT /business-hours | PUT reemplaza semana completa + GET, 422 (2 casos), localidad inexistente (404), 401 | PASS | test_api_catalog_crud.py::test_business_hours_* |
-| GET/POST/DELETE /availability-blocks | crear->leer, 422 (2 casos), rango invalido (400), 401, paginacion, aislamiento (get/delete cruzado + listado + filtro locationId ajeno), soft delete (get sigue 200; **defecto**: sigue en el listado, ver abajo) | PASS | test_api_scheduling_crud.py::test_availability_block_*, test_api_tenant_isolation.py::test_availability_block_*, test_api_soft_delete.py::test_availability_block_* |
+| GET/POST/DELETE /availability-blocks | crear->leer, 422 (2 casos), rango invalido (400), 401, paginacion, aislamiento (get/delete cruzado + listado + filtro locationId ajeno), soft delete completo (get sigue 200; ya no aparece en el listado, ver defectos corregidos) | PASS | test_api_scheduling_crud.py::test_availability_block_*, test_api_tenant_isolation.py::test_availability_block_*, test_api_soft_delete.py::test_availability_block_* |
 | GET/POST/PATCH /customers, GET /customers/{id}/bookings | crear->leer->actualizar, reuso por correo (sp_crear_cliente), 422 (2 casos), 401, paginacion, aislamiento (get/patch/bookings cruzado + listado) | PASS | test_api_scheduling_crud.py::test_customer_*, test_api_tenant_isolation.py::test_customer_* |
 | GET/POST /bookings, GET /bookings/{id}, confirm/cancel/complete/reschedule | crear->leer, ciclo confirm->complete->cancel invalido (400), reschedule (libera bloque anterior), sin datos de cliente (400, THROW 50005), 422 (2 casos), 404 inexistente, 401, paginacion, aislamiento (get + las 4 acciones + listado), doble reserva del mismo bloque (409) | PASS | test_api_scheduling_crud.py::test_booking_*, test_api_tenant_isolation.py::test_booking_*, test_api_errors_rfc7807.py::test_409_conflict_envelope_double_booking |
 | GET /audit-logs | 401, owner token 403, paginacion + shape, filtro tenantId | PASS | test_api_roles_admin.py::test_audit_logs_* |
@@ -110,49 +110,35 @@ negocio de este agente).
    en `test_api_public_track.py`. Comportamiento real documentado por
    recurso (ver tabla de defectos/desviaciones): categories/locations
    exponen `isActive:false` via GET; services no expone `isActive` en
-   absoluto; availability-blocks tiene un defecto real (sigue en el
-   listado del owner tras el DELETE).
+   absoluto; availability-blocks tambien sale correctamente del listado
+   del owner tras el DELETE (defecto ya corregido, ver abajo).
 7. **RFC 7807** (grupo 7): 8/8 PASS. Envelope consistente en 400/401/403/
-   404/409/422/501. El 422 se documenta con detalle (ver defectos menores).
+   404/409/422/501. El detail del 422 ya es JSON valido (defecto menor
+   corregido, ver abajo).
 
 ## Defectos encontrados
 
-### 1. [MAYOR] `GET /availability-blocks` no filtra bloques desactivados (soft-deleted) del listado del owner
+### 1. [CORREGIDO] `GET /availability-blocks` no filtraba bloques desactivados (soft-deleted) del listado del owner
 
 - **Ubicacion**: `apps/api/app/repositories/availability_repository.py`,
-  metodo `AvailabilityRepository.list_owner` (el `WHERE` solo usa
-  `dominio_id`/`fecha_de_bloque`/`localidad_id`; nunca agrega
-  `activo = 1`, a diferencia de `ServiceCategoryRepository.list_by_tenant`,
-  `LocationRepository.list_by_tenant` y `ServiceRepository.list_by_tenant`,
-  que si lo hacen).
-- **Repro**: `POST /availability-blocks` -> `DELETE
-  /availability-blocks/{id}` (200, `activo=0` confirmado por SQL) ->
-  `GET /availability-blocks?date=...` sigue devolviendo el bloque
-  desactivado.
-- **Impacto**: el panel de administracion del negocio (owner) veria
-  bloques "eliminados" como si siguieran vigentes en su propia agenda. El
-  storefront publico NO esta afectado (`GET /public/{slug}/availability`
-  si filtra `bloque_activo = 1` correctamente).
-- **Test que lo documenta (pasa, verificando el comportamiento real tal
-  cual es hoy)**:
-  `test_api_soft_delete.py::test_availability_block_soft_delete_still_appears_in_owner_listing_defect`.
-  Si se corrige el filtro, ese test empezara a fallar (a proposito - el
-  comentario del test lo indica) y hay que actualizar este reporte.
+  metodo `AvailabilityRepository.list_owner`.
+- **Estado actual**: corregido. El `WHERE` ahora exige `bloque_activo = 1`
+  contra `v_estado_disponibilidad`, igual que `ServiceCategoryRepository`,
+  `LocationRepository` y `ServiceRepository`. Un bloque desactivado ya no
+  aparece en `GET /availability-blocks` para el owner.
+- **Test que lo confirma**:
+  `test_api_soft_delete.py::test_availability_block_soft_delete_disappears_from_owner_listing`.
 
-### 2. [MENOR] El envelope 422 no es JSON valido dentro de `detail`
+### 2. [CORREGIDO] El envelope 422 no era JSON valido dentro de `detail`
 
-- **Ubicacion**: `apps/api/app/main.py`, `validation_error_handler` (usa
-  `str(exc.errors())` en vez de `exc.errors()`).
-- **Detalle**: a diferencia del `HTTPValidationError` nativo de FastAPI
-  (`{"detail": [{"loc": [...], "msg": ..., "type": ...}, ...]}`, un array
-  JSON real - visible en `openapi.json`), esta API devuelve `detail` como
-  la *representacion de texto* de una lista de dicts de Python: comillas
-  simples, `loc` como tupla `('body', 'name')`, no parseable con
-  `JSON.parse`/`json.loads`. El campo es igual de "util" para un humano
-  (nombra el campo real que falta) pero un cliente no puede iterarlo
-  como estructura.
+- **Ubicacion**: `apps/api/app/main.py`, `validation_error_handler`.
+- **Estado actual**: corregido. Ahora usa `json.dumps(exc.errors(),
+  default=str)` en vez de `str(exc.errors())`. `detail` sigue siendo un
+  string (cumple RFC 7807), pero su contenido es JSON valido: una lista
+  de objetos `{"loc": [...], "msg": ..., "type": ...}` que un cliente
+  puede parsear con `JSON.parse`/`json.loads` si lo necesita.
 - **Test**: `test_api_errors_rfc7807.py::test_422_envelope_shape_differs_from_fastapi_default`
-  (confirma explicitamente que `json.loads(detail)` lanza `JSONDecodeError`).
+  (confirma explicitamente que `json.loads(detail)` produce esa lista).
 
 ### 3. [MENOR] `detail` expone el mensaje crudo del driver ODBC para errores de negocio (THROW de SQL)
 

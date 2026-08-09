@@ -136,6 +136,31 @@ def test_ciclo_completo_flujo_de_negocio_extremo_a_extremo(
         "DELETE FROM codigos_de_rastreos WHERE reserva_id IN "
         f"(SELECT reserva_id FROM reservaciones WHERE dominio_id = {tenant_id})"
     )
+    # Tablas hijas normalizadas (correo/telefono 1:N): deben registrarse
+    # despues de sus tablas padre en esta lista para que, en el orden LIFO
+    # del teardown, se borren ANTES que el padre.
+    cleanup_sql(f"DELETE FROM dominios_correos WHERE dominio_id = {tenant_id}")
+    cleanup_sql(f"DELETE FROM dominios_telefonos WHERE dominio_id = {tenant_id}")
+    cleanup_sql(
+        "DELETE FROM duenos_de_dominios_correos WHERE dueno_id IN "
+        f"(SELECT dueno_id FROM duenos_de_dominios WHERE dominio_id = {tenant_id})"
+    )
+    cleanup_sql(
+        "DELETE FROM duenos_de_dominios_telefonos WHERE dueno_id IN "
+        f"(SELECT dueno_id FROM duenos_de_dominios WHERE dominio_id = {tenant_id})"
+    )
+    cleanup_sql(
+        "DELETE FROM clientes_correos WHERE cliente_id IN "
+        f"(SELECT cliente_id FROM clientes WHERE dominio_id = {tenant_id})"
+    )
+    cleanup_sql(
+        "DELETE FROM clientes_telefonos WHERE cliente_id IN "
+        f"(SELECT cliente_id FROM clientes WHERE dominio_id = {tenant_id})"
+    )
+    cleanup_sql(
+        "DELETE FROM localidades_telefonos WHERE localidad_id IN "
+        f"(SELECT localidad_id FROM localidades WHERE dominio_id = {tenant_id})"
+    )
 
     assert sql_scalar(
         "SELECT ed.nombre FROM dominios d JOIN estados_dominios ed "
@@ -199,7 +224,10 @@ def test_ciclo_completo_flujo_de_negocio_extremo_a_extremo(
         "/locations",
         json={
             "name": "ZZ E2E Flow Sede Central",
-            "address": "Direccion de prueba del flujo E2E, San Jose",
+            "provincia": "San Jose",
+            "canton": "Central",
+            "distrito": "Carmen",
+            "codigoPostal": "10101",
             "phone": "2200-7000",
         },
         headers=h,

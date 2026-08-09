@@ -149,8 +149,20 @@ def test_register_owner_creates_pending_tenant_and_cleans_up(
     # conftest.py): registramos el DELETE del padre (dominios) primero para
     # que el teardown corra el DELETE del hijo (duenos_de_dominios, que
     # tiene FK NO_ACTION hacia dominios) PRIMERO y evite violar la FK.
+    # duenos_de_dominios y dominios tienen a su vez sus propias tablas hijas
+    # normalizadas de correo/telefono, que deben borrarse antes que ellos.
     cleanup_sql(f"DELETE FROM dominios WHERE dominio_id = {tenant_id}")
     cleanup_sql(f"DELETE FROM duenos_de_dominios WHERE dominio_id = {tenant_id}")
+    cleanup_sql(f"DELETE FROM dominios_correos WHERE dominio_id = {tenant_id}")
+    cleanup_sql(f"DELETE FROM dominios_telefonos WHERE dominio_id = {tenant_id}")
+    cleanup_sql(
+        "DELETE FROM duenos_de_dominios_correos WHERE dueno_id IN "
+        f"(SELECT dueno_id FROM duenos_de_dominios WHERE dominio_id = {tenant_id})"
+    )
+    cleanup_sql(
+        "DELETE FROM duenos_de_dominios_telefonos WHERE dueno_id IN "
+        f"(SELECT dueno_id FROM duenos_de_dominios WHERE dominio_id = {tenant_id})"
+    )
 
     # El dominio nuevo queda pendiente de activacion (no "activo").
     assert sql_scalar(

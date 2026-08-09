@@ -175,7 +175,15 @@ def test_location_cross_tenant_get_patch_delete_404(
     h2 = bearer(owner2_token)
 
     loc = client.post(
-        "/locations", json={"name": f"ZZ_E2E_ISO_LOC_{tag}", "address": "dir"}, headers=h1
+        "/locations",
+        json={
+            "name": f"ZZ_E2E_ISO_LOC_{tag}",
+            "provincia": "San Jose",
+            "canton": "Central",
+            "distrito": "Carmen",
+            "codigoPostal": "10101",
+        },
+        headers=h1,
     ).json()
     location_id = loc["locationId"]
     cleanup_sql(f"DELETE FROM localidades WHERE localidad_id = {location_id}")
@@ -198,7 +206,15 @@ def test_location_listing_does_not_leak_across_tenants(
     tag = unique_tag()
     name = f"ZZ_E2E_ISO_LISTLOC_{tag}"
     loc_id = client.post(
-        "/locations", json={"name": name, "address": "dir"}, headers=bearer(owner2_token)
+        "/locations",
+        json={
+            "name": name,
+            "provincia": "San Jose",
+            "canton": "Central",
+            "distrito": "Carmen",
+            "codigoPostal": "10101",
+        },
+        headers=bearer(owner2_token),
     ).json()["locationId"]
     cleanup_sql(f"DELETE FROM localidades WHERE localidad_id = {loc_id}")
 
@@ -298,6 +314,8 @@ def test_customer_cross_tenant_get_patch_404(
     ).json()
     customer_id = customer["customerId"]
     cleanup_sql(f"DELETE FROM clientes WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_correos WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_telefonos WHERE cliente_id = {customer_id}")
 
     assert client.get(f"/customers/{customer_id}", headers=h2).status_code == 404
     patch_resp = client.patch(f"/customers/{customer_id}", json={"notes": "HACKED"}, headers=h2)
@@ -319,6 +337,8 @@ def test_customer_listing_does_not_leak_across_tenants(
         headers=bearer(owner2_token),
     ).json()["customerId"]
     cleanup_sql(f"DELETE FROM clientes WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_correos WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_telefonos WHERE cliente_id = {customer_id}")
 
     list_resp = client.get("/customers", params={"pageSize": 100}, headers=bearer(owner1_token))
     emails = [c["email"] for c in list_resp.json()["items"]]
@@ -355,6 +375,8 @@ def test_booking_cross_tenant_get_and_actions_404(
         headers=h1,
     ).json()["customerId"]
     cleanup_sql(f"DELETE FROM clientes WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_correos WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_telefonos WHERE cliente_id = {customer_id}")
 
     booking_id = client.post(
         "/bookings",
@@ -405,6 +427,8 @@ def test_booking_listing_does_not_leak_across_tenants(
         headers=bearer(owner2_token),
     ).json()["customerId"]
     cleanup_sql(f"DELETE FROM clientes WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_correos WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_telefonos WHERE cliente_id = {customer_id}")
 
     booking_id = client.post(
         "/bookings",

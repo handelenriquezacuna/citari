@@ -214,7 +214,14 @@ def test_location_create_read_update_cycle(
 
     create_resp = client.post(
         "/locations",
-        json={"name": f"ZZ_E2E_LOC_{tag}", "address": "Direccion de prueba 123", "phone": "2200-0000"},
+        json={
+            "name": f"ZZ_E2E_LOC_{tag}",
+            "provincia": "San Jose",
+            "canton": "Central",
+            "distrito": "Carmen",
+            "codigoPostal": "10101",
+            "phone": "2200-0000",
+        },
         headers=h,
     )
     assert create_resp.status_code == 201, create_resp.text
@@ -222,11 +229,14 @@ def test_location_create_read_update_cycle(
     location_id = created["locationId"]
     assert created["isActive"] is True
     assert created["isMain"] is False
+    # cleanup_sql ejecuta en orden LIFO: registrar el DELETE del padre
+    # primero para que el de la tabla hija corra antes en el teardown.
     cleanup_sql(f"DELETE FROM localidades WHERE localidad_id = {location_id}")
+    cleanup_sql(f"DELETE FROM localidades_telefonos WHERE localidad_id = {location_id}")
 
     get_resp = client.get(f"/locations/{location_id}", headers=h)
     assert get_resp.status_code == 200
-    assert get_resp.json()["address"] == "Direccion de prueba 123"
+    assert get_resp.json()["distrito"] == "Carmen"
 
     patch_resp = client.patch(f"/locations/{location_id}", json={"phone": "2200-1111"}, headers=h)
     assert patch_resp.status_code == 200
@@ -236,16 +246,25 @@ def test_location_create_read_update_cycle(
 
 def test_location_invalid_payload_422(client: httpx.Client, owner1_token: str) -> None:
     h = bearer(owner1_token)
-    # address ausente (requerido)
+    # provincia/canton/distrito/codigoPostal ausentes (requeridos)
     r1 = client.post("/locations", json={"name": "sin direccion"}, headers=h)
     assert r1.status_code == 422
     body1 = r1.json()
     assert_rfc7807(body1, 422)
-    assert "address" in body1["detail"]
+    assert "provincia" in body1["detail"]
 
     # isMain con tipo incorrecto
     r2 = client.post(
-        "/locations", json={"name": "x", "address": "y", "isMain": "si"}, headers=h
+        "/locations",
+        json={
+            "name": "x",
+            "provincia": "San Jose",
+            "canton": "Central",
+            "distrito": "Carmen",
+            "codigoPostal": "10101",
+            "isMain": "si",
+        },
+        headers=h,
     )
     assert r2.status_code == 422
     assert_rfc7807(r2.json(), 422)
@@ -263,7 +282,15 @@ def test_location_pagination_envelope(client: httpx.Client, owner1_token: str, c
     ids = []
     for i in range(2):
         r = client.post(
-            "/locations", json={"name": f"ZZ_E2E_PAGE_LOC_{tag}_{i}", "address": "dir"}, headers=h
+            "/locations",
+            json={
+                "name": f"ZZ_E2E_PAGE_LOC_{tag}_{i}",
+                "provincia": "San Jose",
+                "canton": "Central",
+                "distrito": "Carmen",
+                "codigoPostal": "10101",
+            },
+            headers=h,
         )
         lid = r.json()["locationId"]
         ids.append(lid)
@@ -289,7 +316,15 @@ def test_business_hours_put_replaces_full_week_then_get(
     h = bearer(owner1_token)
 
     loc_resp = client.post(
-        "/locations", json={"name": f"ZZ_E2E_HOURS_LOC_{tag}", "address": "dir"}, headers=h
+        "/locations",
+        json={
+            "name": f"ZZ_E2E_HOURS_LOC_{tag}",
+            "provincia": "San Jose",
+            "canton": "Central",
+            "distrito": "Carmen",
+            "codigoPostal": "10101",
+        },
+        headers=h,
     )
     location_id = loc_resp.json()["locationId"]
     # cleanup_sql corre en orden LIFO: registramos localidades (padre)

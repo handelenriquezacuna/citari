@@ -97,7 +97,15 @@ def test_location_soft_delete_full_behavior(client: httpx.Client, owner1_token: 
     name = f"ZZ_E2E_SOFTDEL_LOC_{tag}"
 
     location_id = client.post(
-        "/locations", json={"name": name, "address": "dir"}, headers=h
+        "/locations",
+        json={
+            "name": name,
+            "provincia": "San Jose",
+            "canton": "Central",
+            "distrito": "Carmen",
+            "codigoPostal": "10101",
+        },
+        headers=h,
     ).json()["locationId"]
     cleanup_sql(f"DELETE FROM localidades WHERE localidad_id = {location_id}")
 
@@ -140,20 +148,17 @@ def test_availability_block_soft_delete_get_and_physical_state(
     ) == "0"
 
 
-def test_availability_block_soft_delete_still_appears_in_owner_listing_defect(
+def test_availability_block_soft_delete_disappears_from_owner_listing(
     client: httpx.Client, owner1_token: str, cleanup_sql
 ) -> None:
-    """DEFECTO (severidad mayor, ver tests/reports/api_report.md): a
-    diferencia de service-categories/services/locations, GET
-    /availability-blocks NO filtra `activo = 1` en su listado (ver
-    AvailabilityRepository.list_owner en
-    apps/api/app/repositories/availability_repository.py - su WHERE solo
-    tiene dominio_id/fecha/localidad_id, no activo). Un bloque desactivado
-    (DELETE) sigue apareciendo en GET /availability-blocks para el owner,
-    aunque el publico (GET /public/{slug}/availability, que si filtra
-    bloque_activo=1) ya no lo ve. Este test documenta el comportamiento
-    real (no es lo esperado por el matrix del WP, que asume "desaparece de
-    listados default" para todo soft delete)."""
+    """Antes documentado como defecto (ver tests/reports/api_report.md):
+    GET /availability-blocks no filtraba `activo = 1` en su listado, a
+    diferencia de service-categories/services/locations. Ya corregido:
+    AvailabilityRepository.list_owner (apps/api/app/repositories/
+    availability_repository.py) ahora exige bloque_activo = 1 en el WHERE
+    contra v_estado_disponibilidad. Un bloque desactivado (DELETE) ya no
+    aparece en GET /availability-blocks para el owner, igual que en el
+    resto de entidades con soft delete."""
     h = bearer(owner1_token)
     block_id = client.post(
         "/availability-blocks",
@@ -168,7 +173,4 @@ def test_availability_block_soft_delete_still_appears_in_owner_listing_defect(
         "/availability-blocks", params={"date": "2027-06-02", "pageSize": 100}, headers=h
     )
     ids = [b["availabilityBlockId"] for b in list_resp.json()["items"]]
-    assert block_id in ids, (
-        "Si esta asercion falla, el defecto fue corregido: actualizar "
-        "tests/reports/api_report.md (ya no es un defecto)."
-    )
+    assert block_id not in ids

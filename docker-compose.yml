@@ -58,7 +58,7 @@ services:
           # ux_reservaciones_bloque; sqlcmd lo trae OFF por defecto).
           /opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "$$SA_PASSWORD" -C -b -I -i "$$f"
         done
-        echo "Base de datos inicializada (15 tablas + seed + procedimientos/funciones/vistas/triggers)."
+        echo "Base de datos inicializada (24 tablas + seed + procedimientos/funciones/vistas/triggers)."
     restart: "no"
     networks:
       - citari_network

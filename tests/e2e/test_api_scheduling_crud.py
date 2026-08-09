@@ -137,6 +137,8 @@ def test_customer_create_read_update_cycle(
     created = create_resp.json()
     customer_id = created["customerId"]
     cleanup_sql(f"DELETE FROM clientes WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_correos WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_telefonos WHERE cliente_id = {customer_id}")
 
     get_resp = client.get(f"/customers/{customer_id}", headers=h)
     assert get_resp.status_code == 200
@@ -161,6 +163,8 @@ def test_customer_create_reuses_existing_by_email(
     first = client.post("/customers", json=payload, headers=h)
     customer_id = first.json()["customerId"]
     cleanup_sql(f"DELETE FROM clientes WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_correos WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_telefonos WHERE cliente_id = {customer_id}")
 
     second = client.post("/customers", json=payload, headers=h)
     assert second.status_code == 201
@@ -208,6 +212,8 @@ def test_customer_pagination_envelope(client: httpx.Client, owner1_token: str, c
         cid = r.json()["customerId"]
         ids.append(cid)
         cleanup_sql(f"DELETE FROM clientes WHERE cliente_id = {cid}")
+        cleanup_sql(f"DELETE FROM clientes_correos WHERE cliente_id = {cid}")
+        cleanup_sql(f"DELETE FROM clientes_telefonos WHERE cliente_id = {cid}")
 
     list_resp = client.get("/customers", params={"pageSize": 1}, headers=h)
     body = list_resp.json()
@@ -248,6 +254,8 @@ def test_booking_create_read_and_lifecycle_transitions(
     )
     customer_id = customer_resp.json()["customerId"]
     cleanup_sql(f"DELETE FROM clientes WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_correos WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_telefonos WHERE cliente_id = {customer_id}")
 
     create_resp = client.post(
         "/bookings",
@@ -318,6 +326,8 @@ def test_booking_reschedule(client: httpx.Client, owner1_token: str, cleanup_sql
         headers=h,
     ).json()["customerId"]
     cleanup_sql(f"DELETE FROM clientes WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_correos WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_telefonos WHERE cliente_id = {customer_id}")
 
     booking_id = client.post(
         "/bookings",
@@ -391,6 +401,8 @@ def test_booking_pagination_envelope(client: httpx.Client, owner1_token: str, cl
         headers=h,
     ).json()["customerId"]
     cleanup_sql(f"DELETE FROM clientes WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_correos WHERE cliente_id = {customer_id}")
+    cleanup_sql(f"DELETE FROM clientes_telefonos WHERE cliente_id = {customer_id}")
 
     booking_ids = []
     for i in range(2):
