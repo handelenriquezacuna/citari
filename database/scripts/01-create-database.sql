@@ -1,10 +1,8 @@
 ﻿-- ============================================================
 -- 01-create-database.sql
--- Proyecto: Citari - Citari
+-- Proyecto: Citari
 -- Contenido: crea la base de datos citari desde cero.
--- Nota: el schema usa identificadores en espanol (ASCII puro);
---       ver docs/rename-map.csv para la equivalencia con los
---       nombres originales en ingles y el modelo MR con enie.
+-- Los identificadores del esquema estan en espanol (ASCII puro).
 -- ============================================================
 
 USE master;
