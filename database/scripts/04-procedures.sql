@@ -33,7 +33,7 @@
 -- Nota de responsabilidad (anti-doble-efecto): estos procedimientos NO
 -- insertan en codigos_de_rastreos ni en registros, y NUNCA reactivan un
 -- bloque de disponibilidad (SET activo = 1). Esos efectos secundarios
--- quedan a cargo de los triggers del Work Package WP4.
+-- quedan a cargo de los triggers correspondientes.
 -- ============================================================
 
 USE citari;
@@ -343,7 +343,7 @@ GO
 -- Procedimiento critico: reserva un bloque de disponibilidad de forma
 -- transaccional y con bloqueo pesimista (UPDLOCK, HOLDLOCK) para evitar
 -- doble reserva bajo concurrencia.
--- No inserta codigos_de_rastreos ni registros (trigger WP4).
+-- No inserta codigos_de_rastreos ni registros (lo hace un trigger).
 -- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_crear_reservacion
     @dominio_id                  INT,
@@ -501,7 +501,7 @@ GO
 -- 11. sp_cancelar_reservacion
 -- Transiciona la reservacion a 'cancelada'. @dominio_id es opcional
 -- para soportar el flujo publico por codigo de rastreo (sin sesion
--- de dominio). No libera el bloque (trigger WP4).
+-- de dominio). No libera el bloque (lo hace un trigger).
 -- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_cancelar_reservacion
     @reserva_id  INT,
@@ -526,8 +526,8 @@ BEGIN
     )
         THROW 50003, 'El estado actual de la reservacion no permite cancelarla.', 1;
 
-    -- Nota WP4: la liberacion del bloque de disponibilidad (activo = 1)
-    -- la realiza un trigger; este procedimiento no la ejecuta.
+    -- La liberacion del bloque de disponibilidad (activo = 1) la
+    -- realiza un trigger; este procedimiento no la ejecuta.
     UPDATE reservaciones
     SET estado_reservacion_id = (SELECT estado_reservacion_id FROM estados_reservaciones WHERE nombre = N'cancelada'),
         actualizado_en        = SYSUTCDATETIME()
@@ -601,8 +601,8 @@ BEGIN
         )
             THROW 50042, 'Ya existe una reservacion activa para el nuevo bloque de disponibilidad.', 1;
 
-        -- Nota WP4: la liberacion del bloque ANTERIOR (activo = 1) la
-        -- realiza un trigger; este procedimiento no la ejecuta.
+        -- La liberacion del bloque ANTERIOR (activo = 1) la realiza
+        -- un trigger; este procedimiento no la ejecuta.
         UPDATE reservaciones
         SET bloque_disponibilidad_id = @nuevo_bloque_id,
             fecha_inicio             = @fecha_inicio,
@@ -612,7 +612,7 @@ BEGIN
         WHERE reserva_id = @reserva_id AND dominio_id = @dominio_id;
 
         -- Ocupa el nuevo bloque. La liberacion del bloque anterior queda
-        -- a cargo del trigger WP4 (no se toca aqui).
+        -- a cargo del trigger correspondiente (no se toca aqui).
         UPDATE bloques_de_disponibilidad
         SET activo = 0, actualizado_en = SYSUTCDATETIME()
         WHERE bloque_disponibilidad_id = @nuevo_bloque_id;
