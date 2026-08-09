@@ -508,16 +508,11 @@ def codigo_rastreo(i):
 
 def build_sql():
     lines = []
-    lines.append("-- ============================================================")
     lines.append("-- 03-seed-data.sql")
-    lines.append("-- Proyecto: Citari - Citari")
+    lines.append("-- Proyecto: Citari")
     lines.append("-- Contenido: datos de prueba (50 registros por tabla, 24 tablas)")
-    lines.append("-- GENERADO por scripts/gen-seed.py -- NO editar a mano.")
-    lines.append("--   Regenerar:  python3 scripts/gen-seed.py")
-    lines.append("--   Verificar:  python3 scripts/gen-seed.py --check")
-    lines.append("-- Requiere base recien creada (01 y 02): los IDs IDENTITY")
-    lines.append("-- inician en 1 y las FKs se emiten como literales 1..50.")
-    lines.append("-- ============================================================")
+    lines.append("-- Requiere una base de datos recien creada: los IDs IDENTITY")
+    lines.append("-- inician en 1 y las llaves foraneas se emiten como literales 1..50.")
     lines.append("")
     lines.append("USE citari;")
     lines.append("GO")

@@ -1,14 +1,12 @@
-﻿-- ============================================================
--- 05-functions.sql
+﻿-- 05-functions.sql
 -- Proyecto: Citari
 -- Contenido: 6 funciones escalares de utilidad sobre el esquema en espanol.
 -- Idempotente: usa CREATE OR ALTER, se puede reejecutar sin error.
--- ============================================================
 
 USE citari;
 GO
 
--- 1. fn_generar_codigo_rastreo ---------------------------------------------
+-- 1. fn_generar_codigo_rastreo
 -- Formatea 'CITARI-' + 6 caracteres alfanumericos derivados deterministicamente
 -- de @semilla. Las funciones escalares no pueden llamar NEWID(); el llamador
 -- debe generar la semilla (por ejemplo con NEWID()) y pasarla como parametro.
@@ -39,7 +37,7 @@ GO
 PRINT '[05-functions] fn_generar_codigo_rastreo ... OK';
 GO
 
--- 2. fn_dominio_activo -------------------------------------------------------
+-- 2. fn_dominio_activo
 -- 1 si el dominio existe, activo = 1 y su estado (estados_dominios) es 'activo'.
 CREATE OR ALTER FUNCTION dbo.fn_dominio_activo (@dominio_id INT)
 RETURNS BIT
@@ -63,7 +61,7 @@ GO
 PRINT '[05-functions] fn_dominio_activo ... OK';
 GO
 
--- 3. fn_bloque_disponible -----------------------------------------------------
+-- 3. fn_bloque_disponible
 -- 1 si el bloque existe, activo = 1 y no tiene ninguna reservacion en un
 -- estado distinto de 'cancelada' apuntandole.
 CREATE OR ALTER FUNCTION dbo.fn_bloque_disponible (@bloque_id INT)
@@ -93,7 +91,7 @@ GO
 PRINT '[05-functions] fn_bloque_disponible ... OK';
 GO
 
--- 4. fn_total_reservaciones_por_dominio ---------------------------------------
+-- 4. fn_total_reservaciones_por_dominio
 CREATE OR ALTER FUNCTION dbo.fn_total_reservaciones_por_dominio (@dominio_id INT)
 RETURNS INT
 AS
@@ -110,7 +108,7 @@ GO
 PRINT '[05-functions] fn_total_reservaciones_por_dominio ... OK';
 GO
 
--- 5. fn_total_reservaciones_por_servicio ---------------------------------------
+-- 5. fn_total_reservaciones_por_servicio
 CREATE OR ALTER FUNCTION dbo.fn_total_reservaciones_por_servicio (@servicio_id INT)
 RETURNS INT
 AS
@@ -127,7 +125,7 @@ GO
 PRINT '[05-functions] fn_total_reservaciones_por_servicio ... OK';
 GO
 
--- 6. fn_duracion_reservacion ---------------------------------------------------
+-- 6. fn_duracion_reservacion
 -- Duracion en minutos de una reservacion (fecha_final - fecha_inicio).
 CREATE OR ALTER FUNCTION dbo.fn_duracion_reservacion (@reserva_id INT)
 RETURNS INT

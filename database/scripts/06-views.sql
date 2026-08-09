@@ -1,15 +1,13 @@
-﻿-- ============================================================
--- 06-views.sql
+﻿-- 06-views.sql
 -- Proyecto: Citari
 -- Contenido: 7 vistas de lectura sobre el esquema en espanol.
 -- Idempotente: usa CREATE OR ALTER, se puede reejecutar sin error.
 -- Toda vista referencia como minimo 2 tablas base.
--- ============================================================
 
 USE citari;
 GO
 
--- 1. v_detalle_reservaciones ---------------------------------------------
+-- 1. v_detalle_reservaciones
 -- Detalle completo de cada reservacion (7 tablas).
 CREATE OR ALTER VIEW dbo.v_detalle_reservaciones
 AS
@@ -52,7 +50,7 @@ GO
 PRINT '[06-views] v_detalle_reservaciones ... OK';
 GO
 
--- 2. v_agenda_diaria -------------------------------------------------------
+-- 2. v_agenda_diaria
 -- Pensada para filtrar por dominio_id + fecha.
 CREATE OR ALTER VIEW dbo.v_agenda_diaria
 AS
@@ -74,7 +72,7 @@ GO
 PRINT '[06-views] v_agenda_diaria ... OK';
 GO
 
--- 3. v_servicios_publicos ---------------------------------------------------
+-- 3. v_servicios_publicos
 -- Solo servicios activos, de categorias activas, de dominios activos.
 CREATE OR ALTER VIEW dbo.v_servicios_publicos
 AS
@@ -98,7 +96,7 @@ GO
 PRINT '[06-views] v_servicios_publicos ... OK';
 GO
 
--- 4. v_dashboard_dominio -----------------------------------------------------
+-- 4. v_dashboard_dominio
 -- Agregados por dominio (reservaciones, clientes, servicios, localidades).
 CREATE OR ALTER VIEW dbo.v_dashboard_dominio
 AS
@@ -145,7 +143,7 @@ GO
 PRINT '[06-views] v_dashboard_dominio ... OK';
 GO
 
--- 5. v_estado_disponibilidad --------------------------------------------------
+-- 5. v_estado_disponibilidad
 -- Estado de cada bloque de disponibilidad: reservado si tiene una
 -- reservacion en un estado distinto de 'cancelada'.
 CREATE OR ALTER VIEW dbo.v_estado_disponibilidad
@@ -176,7 +174,7 @@ GO
 PRINT '[06-views] v_estado_disponibilidad ... OK';
 GO
 
--- 6. v_historial_reservaciones_cliente ----------------------------------------
+-- 6. v_historial_reservaciones_cliente
 CREATE OR ALTER VIEW dbo.v_historial_reservaciones_cliente
 AS
 SELECT
@@ -205,7 +203,7 @@ GO
 PRINT '[06-views] v_historial_reservaciones_cliente ... OK';
 GO
 
--- 7. v_demanda_servicios -------------------------------------------------------
+-- 7. v_demanda_servicios
 CREATE OR ALTER VIEW dbo.v_demanda_servicios
 AS
 SELECT

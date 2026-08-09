@@ -22,15 +22,13 @@ SOURCES = [
     ("07", "TRIGGERS", "07-triggers.sql"),
 ]
 
-HEADER = """-- ============================================================
--- 08-full-script.sql
+HEADER = """-- 08-full-script.sql
 -- Proyecto: Citari
 -- Contenido: script unico que reconstruye la base de datos completa
 -- desde cero, en orden: creacion de la base, las 24 tablas y sus
 -- relaciones, los datos de prueba (50 registros por tabla), los
 -- procedimientos almacenados, las funciones, las vistas y los
 -- triggers. Identificadores en espanol, ASCII.
--- ============================================================
 """
 
 
@@ -39,9 +37,7 @@ def main():
     for num, title, filename in SOURCES:
         src = (SCRIPTS_DIR / filename).read_text(encoding="utf-8-sig")
         parts.append(
-            f"\n-- ============================================================\n"
-            f"-- SECCION {num}. {title}\n"
-            f"-- ============================================================\n\n"
+            f"\n-- SECCION {num}. {title}\n\n"
             f"{src.rstrip()}\n"
         )
     OUTPUT_PATH.write_text("".join(parts), encoding="utf-8-sig")

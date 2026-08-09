@@ -1,4 +1,3 @@
--- ============================================================
 -- 02-create-tables.sql
 -- Proyecto: Citari
 -- Contenido: crea las 24 tablas y relaciones (identificadores en espanol, ASCII)
@@ -7,12 +6,11 @@
 -- duenos_de_dominios, clientes, localidades); la division territorial de
 -- una localidad (provincia/canton/distrito/codigo postal) vive en el
 -- catalogo reutilizable direcciones.
--- ============================================================
 
 USE citari;
 GO
 
--- Catalogos ---------------------------------------------------------------
+-- Catalogos
 
 CREATE TABLE tipos_negocios (
     tipo_negocio_id INT IDENTITY(1,1) PRIMARY KEY,
@@ -39,7 +37,7 @@ CREATE TABLE estados_reservaciones (
 PRINT '[02-create-tables] tabla estados_reservaciones ... OK';
 GO
 
--- Direcciones ---------------------------------------------------------------
+-- Direcciones
 -- Catalogo de division territorial (provincia/canton/distrito/codigo postal):
 -- se separa de localidades porque la direccion detallada de calle vive en la
 -- propia localidad, mientras que la division territorial es un catalogo
@@ -54,7 +52,7 @@ CREATE TABLE direcciones (
 PRINT '[02-create-tables] tabla direcciones ... OK';
 GO
 
--- Superadmins -------------------------------------------------------------
+-- Superadmins
 
 CREATE TABLE superadmins (
     superadmin_id          INT IDENTITY(1,1) PRIMARY KEY,
@@ -79,7 +77,7 @@ CREATE TABLE superadmins_correos (
 PRINT '[02-create-tables] tabla superadmins_correos ... OK';
 GO
 
--- Dominios y duenos --------------------------------------------------------
+-- Dominios y duenos
 
 CREATE TABLE dominios (
     dominio_id        INT IDENTITY(1,1) PRIMARY KEY,
@@ -147,7 +145,7 @@ CREATE TABLE duenos_de_dominios_telefonos (
 PRINT '[02-create-tables] tabla duenos_de_dominios_telefonos ... OK';
 GO
 
--- Clientes ---------------------------------------------------------------
+-- Clientes
 
 CREATE TABLE clientes (
     cliente_id     INT IDENTITY(1,1) PRIMARY KEY,
@@ -180,7 +178,7 @@ CREATE TABLE clientes_telefonos (
 PRINT '[02-create-tables] tabla clientes_telefonos ... OK';
 GO
 
--- Servicios ---------------------------------------------------------------
+-- Servicios
 
 CREATE TABLE categorias_servicios (
     categoria_id   INT IDENTITY(1,1) PRIMARY KEY,
@@ -210,7 +208,7 @@ CREATE TABLE servicios (
 PRINT '[02-create-tables] tabla servicios ... OK';
 GO
 
--- Localidades y horarios --------------------------------------------------
+-- Localidades y horarios
 
 CREATE TABLE localidades (
     localidad_id   INT IDENTITY(1,1) PRIMARY KEY,
@@ -262,7 +260,7 @@ CREATE TABLE bloques_de_disponibilidad (
 PRINT '[02-create-tables] tabla bloques_de_disponibilidad ... OK';
 GO
 
--- Reservaciones ------------------------------------------------------------
+-- Reservaciones
 
 CREATE TABLE reservaciones (
     reserva_id               INT IDENTITY(1,1) PRIMARY KEY,
@@ -301,7 +299,7 @@ CREATE TABLE codigos_de_rastreos (
 PRINT '[02-create-tables] tabla codigos_de_rastreos ... OK';
 GO
 
--- Auditoria ---------------------------------------------------------------
+-- Auditoria
 
 CREATE TABLE registros (
     registro_id     BIGINT IDENTITY(1,1) PRIMARY KEY,

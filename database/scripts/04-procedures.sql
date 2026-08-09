@@ -1,5 +1,4 @@
-﻿-- ============================================================
--- 04-procedures.sql
+﻿-- 04-procedures.sql
 -- Proyecto: Citari
 -- Contenido: 13 procedimientos almacenados de dominios, servicios,
 -- disponibilidad, clientes y reservaciones (identificadores en
@@ -33,15 +32,12 @@
 -- insertan en codigos_de_rastreos ni en registros, y NUNCA reactivan un
 -- bloque de disponibilidad (SET activo = 1). Esos efectos secundarios
 -- quedan a cargo de los triggers correspondientes.
--- ============================================================
 
 USE citari;
 GO
 
--- ------------------------------------------------------------
 -- 1. sp_crear_dominio
 -- Crea un dominio (tenant) en estado 'pendiente'.
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_crear_dominio
     @tipo_negocio_id   INT,
     @nombre            NVARCHAR(200),
@@ -82,10 +78,8 @@ GO
 PRINT ' [04-procedures] sp_crear_dominio ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 2. sp_crear_dueno
 -- Crea el dueno (owner) de un dominio existente.
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_crear_dueno
     @dominio_id             INT,
     @nombre                 NVARCHAR(100),
@@ -119,10 +113,8 @@ GO
 PRINT ' [04-procedures] sp_crear_dueno ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 3. sp_activar_dominio
 -- Cambia el estado del dominio a 'activo'.
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_activar_dominio
     @dominio_id     INT,
     @superadmin_id  INT
@@ -145,10 +137,8 @@ GO
 PRINT ' [04-procedures] sp_activar_dominio ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 4. sp_suspender_dominio
 -- Cambia el estado del dominio a 'suspendido'.
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_suspender_dominio
     @dominio_id     INT,
     @superadmin_id  INT
@@ -171,10 +161,8 @@ GO
 PRINT ' [04-procedures] sp_suspender_dominio ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 5. sp_crear_servicio
 -- Crea un servicio; la categoria debe pertenecer al mismo dominio.
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_crear_servicio
     @dominio_id        INT,
     @categoria_id      INT,
@@ -205,10 +193,8 @@ GO
 PRINT ' [04-procedures] sp_crear_servicio ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 6. sp_actualizar_servicio
 -- Actualiza campos de un servicio (patron COALESCE: NULL = sin cambio).
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_actualizar_servicio
     @servicio_id       INT,
     @dominio_id        INT,
@@ -245,11 +231,9 @@ GO
 PRINT ' [04-procedures] sp_actualizar_servicio ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 7. sp_crear_bloque_disponibilidad
 -- Crea un bloque de disponibilidad validando pertenencia de la
 -- localidad y no-solapamiento con bloques activos de esa localidad.
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_crear_bloque_disponibilidad
     @dominio_id       INT,
     @localidad_id     INT,
@@ -291,10 +275,8 @@ GO
 PRINT ' [04-procedures] sp_crear_bloque_disponibilidad ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 8. sp_crear_cliente
 -- Crea un cliente o reutiliza uno existente por (dominio_id, correo).
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_crear_cliente
     @dominio_id   INT,
     @nombre       NVARCHAR(100),
@@ -337,13 +319,11 @@ GO
 PRINT ' [04-procedures] sp_crear_cliente ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 9. sp_crear_reservacion
 -- Procedimiento critico: reserva un bloque de disponibilidad de forma
 -- transaccional y con bloqueo pesimista (UPDLOCK, HOLDLOCK) para evitar
 -- doble reserva bajo concurrencia.
 -- No inserta codigos_de_rastreos ni registros (lo hace un trigger).
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_crear_reservacion
     @dominio_id                  INT,
     @servicio_id                 INT,
@@ -461,10 +441,8 @@ GO
 PRINT ' [04-procedures] sp_crear_reservacion ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 10. sp_confirmar_reservacion
 -- Transiciona la reservacion a 'confirmada'.
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_confirmar_reservacion
     @reserva_id  INT,
     @dominio_id  INT
@@ -496,12 +474,10 @@ GO
 PRINT ' [04-procedures] sp_confirmar_reservacion ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 11. sp_cancelar_reservacion
 -- Transiciona la reservacion a 'cancelada'. @dominio_id es opcional
 -- para soportar el flujo publico por codigo de rastreo (sin sesion
 -- de dominio). No libera el bloque (lo hace un trigger).
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_cancelar_reservacion
     @reserva_id  INT,
     @dominio_id  INT = NULL
@@ -537,11 +513,9 @@ GO
 PRINT ' [04-procedures] sp_cancelar_reservacion ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 12. sp_reagendar_reservacion
 -- Mueve la reservacion a un nuevo bloque de disponibilidad, con el
 -- mismo bloqueo pesimista usado en sp_crear_reservacion.
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_reagendar_reservacion
     @reserva_id       INT,
     @dominio_id       INT,
@@ -628,10 +602,8 @@ GO
 PRINT ' [04-procedures] sp_reagendar_reservacion ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 13. sp_completar_reservacion
 -- Transiciona la reservacion a 'completada'.
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_completar_reservacion
     @reserva_id  INT,
     @dominio_id  INT
