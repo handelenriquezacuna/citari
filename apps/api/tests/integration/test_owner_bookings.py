@@ -61,7 +61,24 @@ def booking_cleanup(raw_conn) -> Generator[dict, None, None]:
             block_ids,
         )
 
-    cursor.execute("DELETE FROM clientes WHERE correo = ?", [TEST_CUSTOMER_EMAIL])
+    cursor.execute(
+        "SELECT cliente_id FROM clientes_correos WHERE correo = ?", [TEST_CUSTOMER_EMAIL]
+    )
+    test_customer_ids = [row.cliente_id for row in cursor.fetchall()]
+    if test_customer_ids:
+        customer_placeholders = ",".join("?" for _ in test_customer_ids)
+        cursor.execute(
+            f"DELETE FROM clientes_correos WHERE cliente_id IN ({customer_placeholders})",
+            test_customer_ids,
+        )
+        cursor.execute(
+            f"DELETE FROM clientes_telefonos WHERE cliente_id IN ({customer_placeholders})",
+            test_customer_ids,
+        )
+        cursor.execute(
+            f"DELETE FROM clientes WHERE cliente_id IN ({customer_placeholders})",
+            test_customer_ids,
+        )
     cursor.execute("DELETE FROM servicios WHERE nombre LIKE ?", [f"%{WP7B_MARK}%"])
     cursor.execute("DELETE FROM categorias_servicios WHERE nombre LIKE ?", [f"%{WP7B_MARK}%"])
     cursor.execute("DELETE FROM localidades WHERE nombre LIKE ?", [f"%{WP7B_MARK}%"])
@@ -94,7 +111,13 @@ def booking_env(client: TestClient, owner_headers: dict, booking_cleanup: dict) 
     location = client.post(
         "/api/v1/locations",
         headers=owner_headers,
-        json={"name": f"Localidad {WP7B_MARK}", "address": "Calle reservas 9"},
+        json={
+            "name": f"Localidad {WP7B_MARK}",
+            "provincia": "San Jose",
+            "canton": "Central",
+            "distrito": "Carmen",
+            "codigoPostal": "10101",
+        },
     )
     assert location.status_code == 201, location.text
 

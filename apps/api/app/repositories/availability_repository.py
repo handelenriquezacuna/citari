@@ -9,7 +9,7 @@ from app.db import exec_sp_output, query_view
 
 
 class AvailabilityRepository:
-    """bloques_de_disponibilidad / vw_estado_disponibilidad."""
+    """bloques_de_disponibilidad / v_estado_disponibilidad."""
 
     def __init__(self, conn: pyodbc.Connection) -> None:
         self._conn = conn
@@ -57,12 +57,12 @@ class AvailabilityRepository:
         "CAST(fecha_inicio AS TIME) AS hora_inicio, "
         "CAST(fecha_final AS TIME) AS hora_fin, "
         "reservado AS esta_reservado "
-        "FROM vw_estado_disponibilidad"
+        "FROM v_estado_disponibilidad"
     )
 
     def get_by_id(self, tenant_id: int, block_id: int) -> dict[str, Any] | None:
         sql = self._OWNER_SELECT + " WHERE dominio_id = ? AND bloque_id = ?"
-        rows = query_view(self._conn, sql, [tenant_id, block_id], label="vw_estado_disponibilidad")
+        rows = query_view(self._conn, sql, [tenant_id, block_id], label="v_estado_disponibilidad")
         return rows[0] if rows else None
 
     def list_owner(
@@ -93,9 +93,9 @@ class AvailabilityRepository:
 
         total_rows = query_view(
             self._conn,
-            f"SELECT COUNT(*) AS total FROM vw_estado_disponibilidad WHERE {where}",
+            f"SELECT COUNT(*) AS total FROM v_estado_disponibilidad WHERE {where}",
             params,
-            label="vw_estado_disponibilidad",
+            label="v_estado_disponibilidad",
         )
         total = int(total_rows[0]["total"]) if total_rows else 0
 
@@ -108,7 +108,7 @@ class AvailabilityRepository:
             self._conn,
             sql,
             [*params, (page - 1) * page_size, page_size],
-            label="vw_estado_disponibilidad",
+            label="v_estado_disponibilidad",
         )
         return rows, total
 
@@ -139,7 +139,7 @@ class AvailabilityRepository:
         location_id: int | None = None,
     ) -> list[dict[str, Any]]:
         """GET /public/{slug}/availability (WP6). Correction: the WP5 stub
-        filtered on `slug`/`fecha_bloque` - vw_estado_disponibilidad has
+        filtered on `slug`/`fecha_bloque` - v_estado_disponibilidad has
         neither column (the real names are `dominio_slug`/`fecha_de_bloque`,
         docs/sql-signatures.md #2) - and never restricted to free blocks.
         Rewritten to require `bloque_activo = 1 AND reservado = 0` (the WP6
@@ -169,8 +169,8 @@ class AvailabilityRepository:
             "CAST(fecha_final AS TIME) AS hora_fin, "
             "reservado AS esta_reservado, "
             "localidad_id "
-            "FROM vw_estado_disponibilidad "
+            "FROM v_estado_disponibilidad "
             "WHERE " + " AND ".join(conditions) + " "
             "ORDER BY fecha_de_bloque, fecha_inicio"
         )
-        return query_view(self._conn, sql, params, label="vw_estado_disponibilidad")
+        return query_view(self._conn, sql, params, label="v_estado_disponibilidad")

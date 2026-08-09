@@ -115,11 +115,11 @@ class ServiceRepository:
 
     def list_public_by_slug(self, slug: str) -> list[dict[str, Any]]:
         """GET /public/{slug}/services (WP6). Correction: the WP5 stub
-        filtered on `slug`, but vw_servicios_publicos exposes the tenant
+        filtered on `slug`, but v_servicios_publicos exposes the tenant
         slug as `dominio_slug` (docs/sql-signatures.md #2) - `slug` does not
         exist on that view, so this was a guaranteed runtime error. `SELECT
         *` already matches app.mappers.service_mapper.map_service's expected
         keys 1:1 (servicio_id/nombre/descripcion/duracion_minutos/precio/
         mostrar_precio), so no aliasing is needed here."""
-        sql = "SELECT * FROM vw_servicios_publicos WHERE dominio_slug = ? ORDER BY nombre"
-        return query_view(self._conn, sql, [slug], label="vw_servicios_publicos")
+        sql = "SELECT * FROM v_servicios_publicos WHERE dominio_slug = ? ORDER BY nombre"
+        return query_view(self._conn, sql, [slug], label="v_servicios_publicos")

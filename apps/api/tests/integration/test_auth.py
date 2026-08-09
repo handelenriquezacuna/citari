@@ -60,6 +60,10 @@ def temp_pending_owner(
         "DELETE FROM registros WHERE nombre_entidad = 'dominios' AND entidad_id = ?",
         [tenant_id],
     )
+    cursor.execute("DELETE FROM duenos_de_dominios_correos WHERE dueno_id = ?", [owner_id])
+    cursor.execute("DELETE FROM duenos_de_dominios_telefonos WHERE dueno_id = ?", [owner_id])
+    cursor.execute("DELETE FROM dominios_correos WHERE dominio_id = ?", [tenant_id])
+    cursor.execute("DELETE FROM dominios_telefonos WHERE dominio_id = ?", [tenant_id])
     cursor.execute("DELETE FROM duenos_de_dominios WHERE dueno_id = ?", [owner_id])
     cursor.execute("DELETE FROM dominios WHERE dominio_id = ?", [tenant_id])
     raw_conn.commit()
