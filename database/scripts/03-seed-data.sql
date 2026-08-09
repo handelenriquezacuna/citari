@@ -1,10 +1,8 @@
-﻿-- ============================================================
--- 03-seed-data.sql
+﻿-- 03-seed-data.sql
 -- Proyecto: Citari
 -- Contenido: datos de prueba (50 registros por tabla, 24 tablas)
 -- Requiere una base de datos recien creada: los IDs IDENTITY
 -- inician en 1 y las llaves foraneas se emiten como literales 1..50.
--- ============================================================
 
 USE citari;
 GO

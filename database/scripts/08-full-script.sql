@@ -1,23 +1,17 @@
-﻿-- ============================================================
--- 08-full-script.sql
+﻿-- 08-full-script.sql
 -- Proyecto: Citari
 -- Contenido: script unico que reconstruye la base de datos completa
 -- desde cero, en orden: creacion de la base, las 24 tablas y sus
 -- relaciones, los datos de prueba (50 registros por tabla), los
 -- procedimientos almacenados, las funciones, las vistas y los
 -- triggers. Identificadores en espanol, ASCII.
--- ============================================================
 
--- ============================================================
 -- SECCION 01. CREACION DE LA BASE DE DATOS
--- ============================================================
 
--- ============================================================
 -- 01-create-database.sql
 -- Proyecto: Citari
 -- Contenido: crea la base de datos citari desde cero.
 -- Los identificadores del esquema estan en espanol (ASCII puro).
--- ============================================================
 
 USE master;
 GO
@@ -38,11 +32,8 @@ GO
 PRINT '[01-create-database] base de datos citari creada ... OK';
 GO
 
--- ============================================================
 -- SECCION 02. CREACION DE TABLAS Y RELACIONES
--- ============================================================
 
--- ============================================================
 -- 02-create-tables.sql
 -- Proyecto: Citari
 -- Contenido: crea las 24 tablas y relaciones (identificadores en espanol, ASCII)
@@ -51,12 +42,11 @@ GO
 -- duenos_de_dominios, clientes, localidades); la division territorial de
 -- una localidad (provincia/canton/distrito/codigo postal) vive en el
 -- catalogo reutilizable direcciones.
--- ============================================================
 
 USE citari;
 GO
 
--- Catalogos ---------------------------------------------------------------
+-- Catalogos
 
 CREATE TABLE tipos_negocios (
     tipo_negocio_id INT IDENTITY(1,1) PRIMARY KEY,
@@ -83,7 +73,7 @@ CREATE TABLE estados_reservaciones (
 PRINT '[02-create-tables] tabla estados_reservaciones ... OK';
 GO
 
--- Direcciones ---------------------------------------------------------------
+-- Direcciones
 -- Catalogo de division territorial (provincia/canton/distrito/codigo postal):
 -- se separa de localidades porque la direccion detallada de calle vive en la
 -- propia localidad, mientras que la division territorial es un catalogo
@@ -98,7 +88,7 @@ CREATE TABLE direcciones (
 PRINT '[02-create-tables] tabla direcciones ... OK';
 GO
 
--- Superadmins -------------------------------------------------------------
+-- Superadmins
 
 CREATE TABLE superadmins (
     superadmin_id          INT IDENTITY(1,1) PRIMARY KEY,
@@ -123,7 +113,7 @@ CREATE TABLE superadmins_correos (
 PRINT '[02-create-tables] tabla superadmins_correos ... OK';
 GO
 
--- Dominios y duenos --------------------------------------------------------
+-- Dominios y duenos
 
 CREATE TABLE dominios (
     dominio_id        INT IDENTITY(1,1) PRIMARY KEY,
@@ -191,7 +181,7 @@ CREATE TABLE duenos_de_dominios_telefonos (
 PRINT '[02-create-tables] tabla duenos_de_dominios_telefonos ... OK';
 GO
 
--- Clientes ---------------------------------------------------------------
+-- Clientes
 
 CREATE TABLE clientes (
     cliente_id     INT IDENTITY(1,1) PRIMARY KEY,
@@ -224,7 +214,7 @@ CREATE TABLE clientes_telefonos (
 PRINT '[02-create-tables] tabla clientes_telefonos ... OK';
 GO
 
--- Servicios ---------------------------------------------------------------
+-- Servicios
 
 CREATE TABLE categorias_servicios (
     categoria_id   INT IDENTITY(1,1) PRIMARY KEY,
@@ -254,7 +244,7 @@ CREATE TABLE servicios (
 PRINT '[02-create-tables] tabla servicios ... OK';
 GO
 
--- Localidades y horarios --------------------------------------------------
+-- Localidades y horarios
 
 CREATE TABLE localidades (
     localidad_id   INT IDENTITY(1,1) PRIMARY KEY,
@@ -306,7 +296,7 @@ CREATE TABLE bloques_de_disponibilidad (
 PRINT '[02-create-tables] tabla bloques_de_disponibilidad ... OK';
 GO
 
--- Reservaciones ------------------------------------------------------------
+-- Reservaciones
 
 CREATE TABLE reservaciones (
     reserva_id               INT IDENTITY(1,1) PRIMARY KEY,
@@ -345,7 +335,7 @@ CREATE TABLE codigos_de_rastreos (
 PRINT '[02-create-tables] tabla codigos_de_rastreos ... OK';
 GO
 
--- Auditoria ---------------------------------------------------------------
+-- Auditoria
 
 CREATE TABLE registros (
     registro_id     BIGINT IDENTITY(1,1) PRIMARY KEY,
@@ -365,17 +355,13 @@ GO
 PRINT '[02-create-tables] 24/24 tablas creadas';
 GO
 
--- ============================================================
 -- SECCION 03. DATOS DE PRUEBA (SEED)
--- ============================================================
 
--- ============================================================
 -- 03-seed-data.sql
 -- Proyecto: Citari
 -- Contenido: datos de prueba (50 registros por tabla, 24 tablas)
 -- Requiere una base de datos recien creada: los IDs IDENTITY
 -- inician en 1 y las llaves foraneas se emiten como literales 1..50.
--- ============================================================
 
 USE citari;
 GO
@@ -1682,11 +1668,8 @@ GO
 PRINT '[03-seed-data] 24/24 tablas pobladas';
 GO
 
--- ============================================================
 -- SECCION 04. PROCEDIMIENTOS ALMACENADOS
--- ============================================================
 
--- ============================================================
 -- 04-procedures.sql
 -- Proyecto: Citari
 -- Contenido: 13 procedimientos almacenados de dominios, servicios,
@@ -1721,15 +1704,12 @@ GO
 -- insertan en codigos_de_rastreos ni en registros, y NUNCA reactivan un
 -- bloque de disponibilidad (SET activo = 1). Esos efectos secundarios
 -- quedan a cargo de los triggers correspondientes.
--- ============================================================
 
 USE citari;
 GO
 
--- ------------------------------------------------------------
 -- 1. sp_crear_dominio
 -- Crea un dominio (tenant) en estado 'pendiente'.
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_crear_dominio
     @tipo_negocio_id   INT,
     @nombre            NVARCHAR(200),
@@ -1770,10 +1750,8 @@ GO
 PRINT ' [04-procedures] sp_crear_dominio ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 2. sp_crear_dueno
 -- Crea el dueno (owner) de un dominio existente.
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_crear_dueno
     @dominio_id             INT,
     @nombre                 NVARCHAR(100),
@@ -1807,10 +1785,8 @@ GO
 PRINT ' [04-procedures] sp_crear_dueno ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 3. sp_activar_dominio
 -- Cambia el estado del dominio a 'activo'.
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_activar_dominio
     @dominio_id     INT,
     @superadmin_id  INT
@@ -1833,10 +1809,8 @@ GO
 PRINT ' [04-procedures] sp_activar_dominio ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 4. sp_suspender_dominio
 -- Cambia el estado del dominio a 'suspendido'.
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_suspender_dominio
     @dominio_id     INT,
     @superadmin_id  INT
@@ -1859,10 +1833,8 @@ GO
 PRINT ' [04-procedures] sp_suspender_dominio ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 5. sp_crear_servicio
 -- Crea un servicio; la categoria debe pertenecer al mismo dominio.
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_crear_servicio
     @dominio_id        INT,
     @categoria_id      INT,
@@ -1893,10 +1865,8 @@ GO
 PRINT ' [04-procedures] sp_crear_servicio ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 6. sp_actualizar_servicio
 -- Actualiza campos de un servicio (patron COALESCE: NULL = sin cambio).
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_actualizar_servicio
     @servicio_id       INT,
     @dominio_id        INT,
@@ -1933,11 +1903,9 @@ GO
 PRINT ' [04-procedures] sp_actualizar_servicio ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 7. sp_crear_bloque_disponibilidad
 -- Crea un bloque de disponibilidad validando pertenencia de la
 -- localidad y no-solapamiento con bloques activos de esa localidad.
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_crear_bloque_disponibilidad
     @dominio_id       INT,
     @localidad_id     INT,
@@ -1979,10 +1947,8 @@ GO
 PRINT ' [04-procedures] sp_crear_bloque_disponibilidad ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 8. sp_crear_cliente
 -- Crea un cliente o reutiliza uno existente por (dominio_id, correo).
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_crear_cliente
     @dominio_id   INT,
     @nombre       NVARCHAR(100),
@@ -2025,13 +1991,11 @@ GO
 PRINT ' [04-procedures] sp_crear_cliente ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 9. sp_crear_reservacion
 -- Procedimiento critico: reserva un bloque de disponibilidad de forma
 -- transaccional y con bloqueo pesimista (UPDLOCK, HOLDLOCK) para evitar
 -- doble reserva bajo concurrencia.
 -- No inserta codigos_de_rastreos ni registros (lo hace un trigger).
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_crear_reservacion
     @dominio_id                  INT,
     @servicio_id                 INT,
@@ -2149,10 +2113,8 @@ GO
 PRINT ' [04-procedures] sp_crear_reservacion ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 10. sp_confirmar_reservacion
 -- Transiciona la reservacion a 'confirmada'.
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_confirmar_reservacion
     @reserva_id  INT,
     @dominio_id  INT
@@ -2184,12 +2146,10 @@ GO
 PRINT ' [04-procedures] sp_confirmar_reservacion ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 11. sp_cancelar_reservacion
 -- Transiciona la reservacion a 'cancelada'. @dominio_id es opcional
 -- para soportar el flujo publico por codigo de rastreo (sin sesion
 -- de dominio). No libera el bloque (lo hace un trigger).
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_cancelar_reservacion
     @reserva_id  INT,
     @dominio_id  INT = NULL
@@ -2225,11 +2185,9 @@ GO
 PRINT ' [04-procedures] sp_cancelar_reservacion ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 12. sp_reagendar_reservacion
 -- Mueve la reservacion a un nuevo bloque de disponibilidad, con el
 -- mismo bloqueo pesimista usado en sp_crear_reservacion.
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_reagendar_reservacion
     @reserva_id       INT,
     @dominio_id       INT,
@@ -2316,10 +2274,8 @@ GO
 PRINT ' [04-procedures] sp_reagendar_reservacion ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 13. sp_completar_reservacion
 -- Transiciona la reservacion a 'completada'.
--- ------------------------------------------------------------
 CREATE OR ALTER PROCEDURE sp_completar_reservacion
     @reserva_id  INT,
     @dominio_id  INT
@@ -2351,21 +2307,17 @@ GO
 PRINT ' [04-procedures] 13/13 procedimientos creados';
 GO
 
--- ============================================================
 -- SECCION 05. FUNCIONES
--- ============================================================
 
--- ============================================================
 -- 05-functions.sql
 -- Proyecto: Citari
 -- Contenido: 6 funciones escalares de utilidad sobre el esquema en espanol.
 -- Idempotente: usa CREATE OR ALTER, se puede reejecutar sin error.
--- ============================================================
 
 USE citari;
 GO
 
--- 1. fn_generar_codigo_rastreo ---------------------------------------------
+-- 1. fn_generar_codigo_rastreo
 -- Formatea 'CITARI-' + 6 caracteres alfanumericos derivados deterministicamente
 -- de @semilla. Las funciones escalares no pueden llamar NEWID(); el llamador
 -- debe generar la semilla (por ejemplo con NEWID()) y pasarla como parametro.
@@ -2396,7 +2348,7 @@ GO
 PRINT '[05-functions] fn_generar_codigo_rastreo ... OK';
 GO
 
--- 2. fn_dominio_activo -------------------------------------------------------
+-- 2. fn_dominio_activo
 -- 1 si el dominio existe, activo = 1 y su estado (estados_dominios) es 'activo'.
 CREATE OR ALTER FUNCTION dbo.fn_dominio_activo (@dominio_id INT)
 RETURNS BIT
@@ -2420,7 +2372,7 @@ GO
 PRINT '[05-functions] fn_dominio_activo ... OK';
 GO
 
--- 3. fn_bloque_disponible -----------------------------------------------------
+-- 3. fn_bloque_disponible
 -- 1 si el bloque existe, activo = 1 y no tiene ninguna reservacion en un
 -- estado distinto de 'cancelada' apuntandole.
 CREATE OR ALTER FUNCTION dbo.fn_bloque_disponible (@bloque_id INT)
@@ -2450,7 +2402,7 @@ GO
 PRINT '[05-functions] fn_bloque_disponible ... OK';
 GO
 
--- 4. fn_total_reservaciones_por_dominio ---------------------------------------
+-- 4. fn_total_reservaciones_por_dominio
 CREATE OR ALTER FUNCTION dbo.fn_total_reservaciones_por_dominio (@dominio_id INT)
 RETURNS INT
 AS
@@ -2467,7 +2419,7 @@ GO
 PRINT '[05-functions] fn_total_reservaciones_por_dominio ... OK';
 GO
 
--- 5. fn_total_reservaciones_por_servicio ---------------------------------------
+-- 5. fn_total_reservaciones_por_servicio
 CREATE OR ALTER FUNCTION dbo.fn_total_reservaciones_por_servicio (@servicio_id INT)
 RETURNS INT
 AS
@@ -2484,7 +2436,7 @@ GO
 PRINT '[05-functions] fn_total_reservaciones_por_servicio ... OK';
 GO
 
--- 6. fn_duracion_reservacion ---------------------------------------------------
+-- 6. fn_duracion_reservacion
 -- Duracion en minutos de una reservacion (fecha_final - fecha_inicio).
 CREATE OR ALTER FUNCTION dbo.fn_duracion_reservacion (@reserva_id INT)
 RETURNS INT
@@ -2505,22 +2457,18 @@ GO
 PRINT '[05-functions] 6/6 funciones creadas';
 GO
 
--- ============================================================
 -- SECCION 06. VISTAS
--- ============================================================
 
--- ============================================================
 -- 06-views.sql
 -- Proyecto: Citari
 -- Contenido: 7 vistas de lectura sobre el esquema en espanol.
 -- Idempotente: usa CREATE OR ALTER, se puede reejecutar sin error.
 -- Toda vista referencia como minimo 2 tablas base.
--- ============================================================
 
 USE citari;
 GO
 
--- 1. v_detalle_reservaciones ---------------------------------------------
+-- 1. v_detalle_reservaciones
 -- Detalle completo de cada reservacion (7 tablas).
 CREATE OR ALTER VIEW dbo.v_detalle_reservaciones
 AS
@@ -2563,7 +2511,7 @@ GO
 PRINT '[06-views] v_detalle_reservaciones ... OK';
 GO
 
--- 2. v_agenda_diaria -------------------------------------------------------
+-- 2. v_agenda_diaria
 -- Pensada para filtrar por dominio_id + fecha.
 CREATE OR ALTER VIEW dbo.v_agenda_diaria
 AS
@@ -2585,7 +2533,7 @@ GO
 PRINT '[06-views] v_agenda_diaria ... OK';
 GO
 
--- 3. v_servicios_publicos ---------------------------------------------------
+-- 3. v_servicios_publicos
 -- Solo servicios activos, de categorias activas, de dominios activos.
 CREATE OR ALTER VIEW dbo.v_servicios_publicos
 AS
@@ -2609,7 +2557,7 @@ GO
 PRINT '[06-views] v_servicios_publicos ... OK';
 GO
 
--- 4. v_dashboard_dominio -----------------------------------------------------
+-- 4. v_dashboard_dominio
 -- Agregados por dominio (reservaciones, clientes, servicios, localidades).
 CREATE OR ALTER VIEW dbo.v_dashboard_dominio
 AS
@@ -2656,7 +2604,7 @@ GO
 PRINT '[06-views] v_dashboard_dominio ... OK';
 GO
 
--- 5. v_estado_disponibilidad --------------------------------------------------
+-- 5. v_estado_disponibilidad
 -- Estado de cada bloque de disponibilidad: reservado si tiene una
 -- reservacion en un estado distinto de 'cancelada'.
 CREATE OR ALTER VIEW dbo.v_estado_disponibilidad
@@ -2687,7 +2635,7 @@ GO
 PRINT '[06-views] v_estado_disponibilidad ... OK';
 GO
 
--- 6. v_historial_reservaciones_cliente ----------------------------------------
+-- 6. v_historial_reservaciones_cliente
 CREATE OR ALTER VIEW dbo.v_historial_reservaciones_cliente
 AS
 SELECT
@@ -2716,7 +2664,7 @@ GO
 PRINT '[06-views] v_historial_reservaciones_cliente ... OK';
 GO
 
--- 7. v_demanda_servicios -------------------------------------------------------
+-- 7. v_demanda_servicios
 CREATE OR ALTER VIEW dbo.v_demanda_servicios
 AS
 SELECT
@@ -2736,11 +2684,8 @@ GO
 PRINT '[06-views] 7/7 vistas creadas';
 GO
 
--- ============================================================
 -- SECCION 07. TRIGGERS
--- ============================================================
 
--- ============================================================
 -- 07-triggers.sql
 -- Proyecto: Citari
 -- Contenido: 7 triggers sobre reservaciones, dominios y servicios
@@ -2774,12 +2719,10 @@ GO
 -- TRIGGER_NESTLEVEL) para que el comportamiento sea correcto tambien
 -- si alguna vez se activa RECURSIVE_TRIGGERS. Ver el comentario de
 -- cada trigger para el detalle de su guarda.
--- ============================================================
 
 USE citari;
 GO
 
--- ------------------------------------------------------------
 -- 1. tr_reservaciones_generar_rastreo
 -- AFTER INSERT en reservaciones: crea una fila en codigos_de_rastreos
 -- por cada reserva insertada (soporta INSERT multifila). El codigo se
@@ -2787,7 +2730,6 @@ GO
 -- escalares no pueden llamar NEWID() pero los triggers si, por eso la
 -- semilla se genera aqui (una semilla distinta por fila via
 -- CROSS APPLY) y se pasa como parametro a la funcion.
--- ------------------------------------------------------------
 CREATE OR ALTER TRIGGER tr_reservaciones_generar_rastreo
 ON reservaciones
 AFTER INSERT
@@ -2808,12 +2750,10 @@ GO
 PRINT ' [07-triggers] tr_reservaciones_generar_rastreo ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 2. tr_reservaciones_auditar_insert
 -- AFTER INSERT en reservaciones: registra en "registros" la creacion
--- de cada reserva. dueno_id/superadmin_id quedan NULL; el actor lo
--- registrara la API en un futuro work package.
--- ------------------------------------------------------------
+-- de cada reserva. dueno_id/superadmin_id quedan NULL; el actor que
+-- origina la accion queda a cargo de quien construya esa capa despues.
 CREATE OR ALTER TRIGGER tr_reservaciones_auditar_insert
 ON reservaciones
 AFTER INSERT
@@ -2841,7 +2781,6 @@ GO
 PRINT ' [07-triggers] tr_reservaciones_auditar_insert ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 3. tr_reservaciones_auditar_update
 -- AFTER UPDATE en reservaciones: registra en "registros" unicamente
 -- cuando cambia estado_reservacion_id (ignora otros cambios, por
@@ -2850,7 +2789,6 @@ GO
 -- es FALSE cuando el UPDATE recursivo (trigger 7 poniendo
 -- bloque_disponibilidad_id = NULL) no toca esa columna, asi que este
 -- trigger no vuelve a insertar una fila de auditoria para ese caso.
--- ------------------------------------------------------------
 CREATE OR ALTER TRIGGER tr_reservaciones_auditar_update
 ON reservaciones
 AFTER UPDATE
@@ -2882,7 +2820,6 @@ GO
 PRINT ' [07-triggers] tr_reservaciones_auditar_update ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 4. tr_dominios_actualizado_en
 -- AFTER UPDATE en dominios: mantiene actualizado_en = SYSUTCDATETIME().
 -- Guarda anti-recursion elegida: IF UPDATE(actualizado_en) RETURN.
@@ -2894,7 +2831,6 @@ GO
 -- recursiva del trigger (solo posible si se activara
 -- RECURSIVE_TRIGGERS) encontraria UPDATE(actualizado_en) = TRUE y
 -- retornaria de inmediato, sin bucle infinito.
--- ------------------------------------------------------------
 CREATE OR ALTER TRIGGER tr_dominios_actualizado_en
 ON dominios
 AFTER UPDATE
@@ -2914,11 +2850,9 @@ GO
 PRINT ' [07-triggers] tr_dominios_actualizado_en ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 5. tr_servicios_actualizado_en
 -- AFTER UPDATE en servicios: mismo patron y misma guarda anti-recursion
 -- que tr_dominios_actualizado_en (IF UPDATE(actualizado_en) RETURN).
--- ------------------------------------------------------------
 CREATE OR ALTER TRIGGER tr_servicios_actualizado_en
 ON servicios
 AFTER UPDATE
@@ -2938,7 +2872,6 @@ GO
 PRINT ' [07-triggers] tr_servicios_actualizado_en ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 6. tr_prevenir_doble_reservacion
 -- AFTER INSERT, UPDATE en reservaciones: si mas de una reservacion NO
 -- cancelada apunta al mismo bloque_disponibilidad_id (no NULL),
@@ -2954,7 +2887,6 @@ GO
 -- reservaciones que se salten esos stored procedures (por ejemplo, si
 -- en el futuro se relajara o se eliminara por error el indice unico
 -- filtrado).
--- ------------------------------------------------------------
 CREATE OR ALTER TRIGGER tr_prevenir_doble_reservacion
 ON reservaciones
 AFTER INSERT, UPDATE
@@ -2982,7 +2914,6 @@ GO
 PRINT ' [07-triggers] tr_prevenir_doble_reservacion ... OK';
 GO
 
--- ------------------------------------------------------------
 -- 7. tr_liberar_bloque_al_cancelar
 -- AFTER UPDATE en reservaciones. Dos comportamientos independientes:
 --
@@ -3011,7 +2942,6 @@ GO
 -- mutuamente excluyentes por construccion: (a) exige un cambio de
 -- estado hacia 'cancelada'; (b) exige que el estado NO haya cambiado
 -- el bloque hacia NULL sino hacia otro bloque no nulo distinto.
--- ------------------------------------------------------------
 CREATE OR ALTER TRIGGER tr_liberar_bloque_al_cancelar
 ON reservaciones
 AFTER UPDATE

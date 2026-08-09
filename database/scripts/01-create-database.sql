@@ -1,9 +1,7 @@
-﻿-- ============================================================
--- 01-create-database.sql
+﻿-- 01-create-database.sql
 -- Proyecto: Citari
 -- Contenido: crea la base de datos citari desde cero.
 -- Los identificadores del esquema estan en espanol (ASCII puro).
--- ============================================================
 
 USE master;
 GO
