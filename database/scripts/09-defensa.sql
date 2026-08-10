@@ -1,28 +1,15 @@
 -- 09-defensa.sql
 -- Proyecto: Citari
 --
--- Guion de defensa (SC-404, semana 14/15): un extracto de la base ya
--- construida por 01-08, ordenado igual que el enunciado del proyecto
--- (procedimientos, vistas, funciones, triggers), con los 2 objetos
--- mas elaborados de cada categoria y una demostracion en vivo.
---
--- El script completo de la base de datos, con la creacion de la base,
--- las 24 tablas, los 1200 registros de prueba y la totalidad de los
--- objetos, esta en 08-full-script.sql; este archivo no lo reemplaza.
+-- Extracto de la base de datos: los 2 procedimientos, las 2 vistas,
+-- las 2 funciones y los 2 triggers mas elaborados de cada categoria,
+-- con explicacion tecnica y una demostracion en vivo del flujo
+-- completo de una reservacion.
 --
 -- Todas las sentencias son CREATE OR ALTER: se pueden ejecutar en
 -- cualquier orden y las veces que haga falta (por ejemplo, una sola
 -- vista suelta, sin haber corrido nada mas antes) sin producir un
 -- error de "el objeto ya existe".
---
--- Trazabilidad a las historias de usuario del Avance 1 y el Avance 2:
---   sp_crear_reservacion, sp_reagendar_reservacion -> Historia 13.
---   v_detalle_reservaciones, v_dashboard_dominio    -> Historias 3, 6, 8, 11, 13, 14.
---   fn_bloque_disponible                            -> Historia 10.
---   fn_generar_codigo_rastreo                       -> Historia 14.
---   tr_prevenir_doble_reservacion,
---   tr_liberar_bloque_al_cancelar                   -> relacion 1:1 reserva-bloque
---                                                       documentada desde el Avance 1.
 
 USE citari;
 GO
@@ -68,15 +55,15 @@ GO
 PRINT 'Fin de la Parte 1';
 GO
 
--- Parte 2. Los 8 objetos seleccionados, en el orden del enunciado:
--- procedimientos, vistas, funciones, triggers.
+-- Parte 2. Los 8 objetos seleccionados: procedimientos, vistas,
+-- funciones y triggers.
 
 PRINT 'Parte 2: procedimientos, vistas, funciones y triggers seleccionados';
 GO
 
 -- 2.1 Procedimientos almacenados
 
--- Procedimiento 1 de 2. Historia 13.
+-- sp_crear_reservacion
 -- Crea una reservacion validando dominio activo, servicio y localidad
 -- del dominio correcto, y bloque libre; todo dentro de una
 -- transaccion, para que no quede ningun cambio a medias si algo falla.
@@ -200,7 +187,7 @@ GO
 PRINT '2.1.a sp_crear_reservacion definido';
 GO
 
--- Procedimiento 2 de 2. Historia 13.
+-- sp_reagendar_reservacion
 -- Mueve una reservacion existente a otro bloque, en un solo paso
 -- (sin pasar por cancelar y crear de nuevo).
 CREATE OR ALTER PROCEDURE sp_reagendar_reservacion
@@ -289,7 +276,7 @@ GO
 
 -- 2.2 Vistas
 
--- Vista 1 de 2. Historias 3, 6, 8, 13, 14.
+-- v_detalle_reservaciones
 -- Detalle completo de una reservacion en una sola fila, listo para
 -- mostrarse sin que quien la consulte tenga que hacer los JOIN.
 CREATE OR ALTER VIEW dbo.v_detalle_reservaciones
@@ -335,7 +322,7 @@ GO
 PRINT '2.2.a v_detalle_reservaciones definida';
 GO
 
--- Vista 2 de 2. Historias 3, 8, 11, 13.
+-- v_dashboard_dominio
 -- Agregados por dominio: total de reservaciones por estado, clientes,
 -- servicios y localidades activos. Pensada para un panel de control.
 CREATE OR ALTER VIEW dbo.v_dashboard_dominio
@@ -388,7 +375,7 @@ GO
 
 -- 2.3 Funciones
 
--- Funcion 1 de 2. Historia 10.
+-- fn_bloque_disponible
 -- Responde 1 o 0: si un bloque de disponibilidad puede recibir una
 -- reserva ahora mismo.
 CREATE OR ALTER FUNCTION dbo.fn_bloque_disponible (@bloque_id INT)
@@ -421,7 +408,7 @@ GO
 PRINT '2.3.a fn_bloque_disponible definida';
 GO
 
--- Funcion 2 de 2. Historia 14.
+-- fn_generar_codigo_rastreo
 -- Genera el codigo publico CITARI-XXXXXX que un cliente sin cuenta usa
 -- para consultar, cancelar o reagendar su reserva.
 CREATE OR ALTER FUNCTION dbo.fn_generar_codigo_rastreo (@semilla UNIQUEIDENTIFIER)
@@ -456,9 +443,9 @@ GO
 
 -- 2.4 Triggers
 
--- Trigger 1 de 2. Relacion 1:1 reserva-bloque, documentada desde el
--- Avance 1: una reservacion ocupa exactamente un bloque; un bloque es
--- ocupado por cero o una reservacion.
+-- tr_prevenir_doble_reservacion
+-- Regla de negocio: una reservacion ocupa exactamente un bloque; un
+-- bloque es ocupado por cero o una reservacion.
 --
 -- Segunda barrera contra la doble reserva: el indice unico filtrado
 -- ux_reservaciones_bloque (definido sobre reservaciones, filtrado a
@@ -495,9 +482,10 @@ GO
 PRINT '2.4.a tr_prevenir_doble_reservacion definido';
 GO
 
--- Trigger 2 de 2. Historia 13: efecto automatico de cancelar o
--- reagendar. Mantiene el estado libre/ocupado de un bloque
--- sincronizado con las reservaciones que lo usan.
+-- tr_liberar_bloque_al_cancelar
+-- Efecto automatico de cancelar o reagendar una reserva: mantiene el
+-- estado libre/ocupado de un bloque sincronizado con las
+-- reservaciones que lo usan.
 CREATE OR ALTER TRIGGER tr_liberar_bloque_al_cancelar
 ON reservaciones
 AFTER UPDATE
@@ -623,7 +611,7 @@ EXEC sp_crear_reservacion
     @localidad_id             = @localidad_id,
     @bloque_disponibilidad_id = @bloque_a_id,
     @cliente_id               = @cliente_id,
-    @nota_cliente              = N'Reserva de demostracion - defensa SC-404',
+    @nota_cliente              = N'Reserva de demostracion',
     @reserva_id                = @reserva_id OUTPUT;
 
 PRINT '3.3 v_detalle_reservaciones: detalle completo de la reserva recien creada';
