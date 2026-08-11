@@ -91,7 +91,7 @@ BEGIN
         THROW 50005, 'Debe proporcionar cliente_id o los datos completos del cliente (nombre, apellido_1, correo, telefono).', 1;
 
     BEGIN TRY
-        BEGIN TRAN;
+        BEGIN TRAN; -- inicia la de transaction
 
         DECLARE @dominio_estado_id INT;
         SELECT @dominio_estado_id = dominio_estado_id FROM dominios WHERE dominio_id = @dominio_id;
@@ -175,7 +175,7 @@ BEGIN
         SET activo = 0, actualizado_en = SYSUTCDATETIME() -- ocupa el bloque; nunca lo reactiva (eso es trabajo de los triggers, ver 2.4)
         WHERE bloque_disponibilidad_id = @bloque_disponibilidad_id;
 
-        COMMIT TRAN;
+        COMMIT TRAN; -- termina la de transaction
     END TRY
     BEGIN CATCH
         IF XACT_STATE() <> 0
@@ -186,6 +186,42 @@ END
 GO
 PRINT '2.1.a sp_crear_reservacion definido';
 GO
+
+-- Demostracion de la logica
+SELECT * FROM bloques_de_disponibilidad;
+
+-- Dos renglones vacios en la agenda del viernes de Barberia El Colocho
+DECLARE @a INT;
+
+-- Siempre necesario crear un bloque de disponibilidad
+EXEC sp_crear_bloque_disponibilidad
+	  @dominio_id=1
+	, @localidad_id=1
+	, @fecha_de_bloque='2034-01-13'
+	, @fecha_inicio='2034-01-13T06:00:00'
+	, @fecha_final='2034-01-13T06:30:00'
+	, @bloque_id=@a OUTPUT;
+
+SELECT @a AS bloque_A
+
+---------- se ejecuta la reservacion
+DECLARE @reserva INT ;
+EXEC sp_crear_reservacion
+       @dominio_id=1
+     , @servicio_id=1
+     , @localidad_id=1
+     , @bloque_disponibilidad_id=52
+     , @cliente_nombre=N'Maria'
+     , @cliente_apellido_1=N'Solano'
+     , @cliente_correo=N'maria.demo@test.com'
+     , @cliente_telefono=N'8888-1234'
+     , @reserva_id=@reserva OUTPUT;
+
+SELECT @reserva AS reserva_creada; -- Reserva creada
+
+-- Ver reservaciones
+
+SELECT * FROM v_detalle_reservaciones;
 
 -- sp_reagendar_reservacion
 -- Mueve una reservacion existente a otro bloque, en un solo paso
@@ -273,6 +309,30 @@ END
 GO
 PRINT '2.1.b sp_reagendar_reservacion definido';
 GO
+
+-----Demostracion
+SELECT * FROM bloques_de_disponibilidad;
+
+DECLARE @A INT
+
+-- Agenda disponible
+EXEC sp_crear_bloque_disponibilidad 
+	  @dominio_id=1
+	, @localidad_id=1
+	, @fecha_de_bloque='2035-03-04'
+	, @fecha_inicio='2035-03-04T19:00:00'
+	, @fecha_final='2035-03-04T19:30:00'
+    , @bloque_id=@A OUTPUT;
+
+SELECT @a AS bloque_A
+
+
+--  SP 2: Maria se muda a las 15:00 (mismo candado, sobre el bloque nuevo)
+EXEC sp_reagendar_reservacion @reserva_id=51, @dominio_id=1, @nuevo_bloque_id=53;
+
+SELECT * FROM v_detalle_reservaciones
+
+DELETE FROM bloques_de_disponibilidad WHERE bloque_disponibilidad_id > 50 
 
 -- 2.2 Vistas
 
